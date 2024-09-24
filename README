@@ -1,9 +1,10 @@
-**Docker Reference**
-Video intro: https://www.youtube.com/watch?v=b0HMimUb4f0
-Documentation: https://docs.docker.com/get-started/
+Netfilter:
+https://www.netfilter.org/
+https://wiki.nftables.org/wiki-nftables/index.php/Main_Page
+https://wiki.nftables.org/wiki-nftables/index.php/Queueing_to_userspace
 
-
-**StrongSwan Reference**
+StrongSwan Reference
+https://docs.strongswan.org/docs/5.9/index.html
 Remote access: https://www.strongswan.org/testing/testresults6/ikev2/rw-psk-ipv4/
 
 
