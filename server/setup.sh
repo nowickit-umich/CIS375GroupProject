@@ -8,7 +8,7 @@ SERVER_INTERFACE="enX0"
 
 #Install VPN software
 apt update
-apt install strongswan git -y
+apt install strongswan curl -y
 
 #Enable forwarding
 if ! grep -q "^net.ipv4.ip_forward=1" /etc/sysctl.conf; then
