@@ -38,9 +38,8 @@ nft add rule ip filter input ip protocol udp udp dport 4500 accept
 nft list ruleset > /etc/nftables.conf
 
 #Configure VPN
-git clone https://github.com/nowickit-umich/CIS375GroupProject /tmp/
-cp /tmp/CIS375GroupProject/server/config/ipsec.conf /etc/ipsec.conf
-cp /tmp/CIS375GroupProject/server/config/ipsec.secrets /etc/ipsec.secrets
+curl -o /etc/ipsec.conf https://github.com/nowickit-umich/CIS375GroupProject/blob/main/server/config/ipsec.conf
+#TODO configure PSK /etc/ipsec.secrets
 
 systemctl restart ipsec
 systemctl enable ipsec
