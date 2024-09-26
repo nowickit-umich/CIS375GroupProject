@@ -1,0 +1,20 @@
+something like this will be needed for a self signed deployment option
+
+Create the CA private key:
+openssl genpkey -algorithm RSA -out ca-key.pem -pkeyopt rsa_keygen_bits:4096
+
+Create the CA certificate:
+openssl req -x509 -new -noenc -key ca-key.pem -sha256 -days 3650 -out ca-cert.pem -config ca.conf
+
+Generate the Server Private Key
+openssl genpkey -algorithm RSA -out server-key.pem -pkeyopt rsa_keygen_bits:4096
+
+Create the Certificate Signing Request (CSR) for the Server
+openssl req -new -key /etc/swanctl/private/server-key.pem -outform pem -out server-req.pem 
+
+Create serial file???:
+790D30588E77E68556A29927CF29AC3D0C1A2A11
+
+Sign the CSR:
+openssl ca -in server-req.pem -inform pem -config server.conf
+

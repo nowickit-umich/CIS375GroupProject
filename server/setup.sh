@@ -8,11 +8,12 @@ SERVER_INTERFACE="enX0"
 
 #Install VPN software
 apt update
-apt install strongswan curl -y
+apt install charon-systemd strongswan-swanctl -y
+apt remove strongswan-starter strongswan-charon -y
 
 #Enable forwarding
-if ! grep -q "^net.ipv4.ip_forward=1" /etc/sysctl.conf; then
-        echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+if [ ! -f /etc/sysctl.d/forward.conf ]; then
+        echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/forward.conf
 fi
 #Reload config
 sysctl -p
@@ -30,16 +31,16 @@ nft add rule ip filter forward ip saddr $CLIENT_NET accept
 nft add rule ip filter forward ct state related,established accept
 
 #Allow VPN server traffic
-nft 'add chain ip filter input { type filter hook input priority 0; }'
-nft add rule ip filter input ip protocol udp udp dport 500 accept
-nft add rule ip filter input ip protocol udp udp dport 4500 accept
+nft 'add chain ip filter input { type filter hook input priority 0; policy deny }'
+nft add rule ip filter input tcp dport 22 accept
+nft add rule ip filter input udp dport 500 accept
+nft add rule ip filter input udp dport 4500 accept
 
 #Save Firewall Config
-nft list ruleset > /etc/nftables.conf
+#nft list ruleset > /etc/nftables.conf
 
 #Configure VPN
-curl -o /etc/ipsec.conf https://github.com/nowickit-umich/CIS375GroupProject/blob/main/server/config/ipsec.conf
-#TODO configure PSK /etc/ipsec.secrets
+#curl -o /etc/ipsec.conf https://github.com/nowickit-umich/CIS375GroupProject/blob/main/server/config/ipsec.conf
 
-systemctl restart ipsec
-systemctl enable ipsec
+systemctl restart strongswan
+systemctl enable strongswan
