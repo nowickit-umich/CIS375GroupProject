@@ -1,10 +1,14 @@
-#include <linux/kernel.h>          // Kernel header
-#include <linux/module.h>          // Required for all kernel modules
-#include <linux/netfilter.h>       // Netfilter header
-#include <linux/netfilter_ipv4.h>  // IPv4-specific Netfilter header
-#include <linux/ip.h>              // IP header structures
-#include <linux/init.h>            // Required for module init/exit macros
-#include <linux/net.h>             // For network-related structures
+//intercept forwarded packets
+//log src/dst ip addresses
+//simple demo
+
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/ip.h>
+#include <linux/init.h>
+#include <linux/net.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Ted Nowicki");
@@ -47,7 +51,7 @@ static int __init packet_interceptor_init(void) {
     //set hook function
     nfho.hook = hook_func;
     //netfilter hook type NF_INET_FORWARD
-    nfho.hooknum = NF_INET_PRE_ROUTING; 
+    nfho.hooknum = NF_INET_FORWARD; 
     //Protocol Family
     nfho.pf = PF_INET;
     //highest priority    
