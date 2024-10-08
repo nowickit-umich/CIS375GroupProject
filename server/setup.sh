@@ -31,7 +31,7 @@ nft add rule ip filter forward ip saddr $CLIENT_NET accept
 nft add rule ip filter forward ct state related,established accept
 
 #Allow VPN server traffic
-nft 'add chain ip filter input { type filter hook input priority 0; policy deny }'
+nft 'add chain ip filter input { type filter hook input priority 0; policy drop }'
 nft add rule ip filter input tcp dport 22 accept
 nft add rule ip filter input udp dport 500 accept
 nft add rule ip filter input udp dport 4500 accept
