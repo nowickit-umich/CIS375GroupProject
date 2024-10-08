@@ -8,7 +8,7 @@ SERVER_INTERFACE="enX0"
 
 #Install VPN software
 apt update
-apt install charon-systemd strongswan-swanctl -y
+apt install curl charon-systemd strongswan-swanctl -y
 apt remove strongswan-starter strongswan-charon -y
 
 #Enable forwarding
@@ -42,17 +42,33 @@ nft list ruleset > /etc/nftables.conf
 #Configure VPN
 curl -o /etc/swanctl/swanctl.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/swanctl.conf
 
-#VPN Certificate config
-#TODO
-curl -o /root/ca.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/cert/ca.conf
-curl -o /root/server.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/cert/server.conf
+IP="$(curl -s ifconfig.me)"
+if [[ -z "$IP" ]]
+then
+        IP="$(curl -s ipinfo.io/ip)"
+fi
+if [[ -z "$IP" ]]
+then
+        IP="$(curl -s icanhazip.com)"
+fi
+if [[ -z "$IP" ]]
+then
+        echo "Failed to get IP"
+        exit 1
+fi
 
-openssl rand 19 > /root/serial
-openssl genpkey -algorithm RSA -out /root/ca-key.pem -pkeyopt rsa_keygen_bits:4096
-openssl req -x509 -new -noenc -key ca-key.pem -sha256 -days 3650 -out /etc/swanctl/x509ca/ca-cert.pem -config /root/ca.conf
-openssl genpkey -algorithm RSA -out /etc/swanctl/private/server-key.pem -pkeyopt rsa_keygen_bits:4096
-openssl req -new -key /etc/swanctl/private/server-key.pem -outform pem -out server-req.pem
-openssl ca -in server-req.pem -inform pem -config server.conf
+curl https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/cert/template.conf
+
+cp template.conf cert.conf
+sed -i -e "s/%IP%/$IP/g" cert.conf
+
+sed -i -e "s/%IP%/$IP/g" /etc/swanctl/swanctl.conf
+#Certificate Config
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -config cert.conf
+
+mv key.pem /etc/swanctl/private/key.pem
+mv cert.pem /etc/swanctl/x509/cert.pem
+
 
 systemctl restart strongswan
 systemctl enable strongswan
