@@ -8,7 +8,7 @@ SERVER_INTERFACE="enX0"
 
 #Install VPN software
 apt update
-apt install curl charon-systemd strongswan-swanctl -y
+apt install curl charon-systemd strongswan-swanctl libcharon-extra-plugins -y
 apt remove strongswan-starter strongswan-charon -y
 
 #Enable forwarding
@@ -42,6 +42,7 @@ nft list ruleset > /etc/nftables.conf
 #Configure VPN
 #curl -o /etc/swanctl/swanctl.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/swanctl.conf
 cp ./config/swanctl.conf /etc/swanctl/swanctl.conf
+cp ./config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 
 IP="$(curl -s ifconfig.me)"
 if [[ -z "$IP" ]]
