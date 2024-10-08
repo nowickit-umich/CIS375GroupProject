@@ -40,7 +40,8 @@ nft add rule ip filter input udp dport 4500 accept
 nft list ruleset > /etc/nftables.conf
 
 #Configure VPN
-curl -o /etc/swanctl/swanctl.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/swanctl.conf
+#curl -o /etc/swanctl/swanctl.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/swanctl.conf
+cp ./config/swanctl.conf /etc/swanctl/swanctl.conf
 
 IP="$(curl -s ifconfig.me)"
 if [[ -z "$IP" ]]
@@ -57,9 +58,9 @@ then
         exit 1
 fi
 
-curl https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/cert/template.conf
+#curl https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/cert/template.conf
 
-cp template.conf cert.conf
+cp ./config/cert/template.conf cert.conf
 sed -i -e "s/%IP%/$IP/g" cert.conf
 
 sed -i -e "s/%IP%/$IP/g" /etc/swanctl/swanctl.conf
@@ -69,10 +70,7 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3
 mv key.pem /etc/swanctl/private/key.pem
 mv cert.pem /etc/swanctl/x509/cert.pem
 
-
 systemctl restart strongswan
 systemctl enable strongswan
 
-
-#Web server setup
 
