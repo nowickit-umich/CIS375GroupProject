@@ -1,3 +1,5 @@
+import VPNInterface
+
 
 class windows_vpn(VPNInterface):
     def connect():
