@@ -1,5 +1,5 @@
-from vpn.vpn_interface import VPNInterface
-from cloud.cloudinterface import CloudInterface
+from cloud_manager import Cloud_Manager
+from vpn_manager import VPN_Manager
 
 #UI Imports
 from kivy.app import App
