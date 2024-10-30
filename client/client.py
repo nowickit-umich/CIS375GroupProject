@@ -49,6 +49,10 @@ class UI_DEMOApp(App):
     def build(self):
         sm = ScreenManager()
 
+        # Managers
+        vpn_manager = VPN_Manager()
+        cloud_manager = Cloud_Manager()
+
         # Add screens
         sm.add_widget(vpnScreen(name='vpn'))
         sm.add_widget(filterScreen(name='filters'))
