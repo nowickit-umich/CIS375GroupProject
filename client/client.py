@@ -1,4 +1,4 @@
-import kivy
+#import kivy
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
@@ -15,14 +15,14 @@ from kivy.lang import Builder
 from kivy.uix.popup import Popup
 import time
 from kivy.properties import StringProperty
-
+from cloud.aws_interface import AwsInterface
 
 #This sets background color, has no impact unless the background image is commented out or removed
 #Window.clearcolor = (1,1,1)
 
 #Change window size on startup, may have to change later.
-Window.size = (1200,750)
-
+Window.size = (800,600)
+#Window.borderless = True
 
 #Background image
 Builder.load_string('''
@@ -31,14 +31,14 @@ Builder.load_string('''
         BorderImage:
             #BorderImage behaves like the CSS BorderImage
             border: 10, 10, 10, 10
-            source: 'images/Earth2.png' #can change this image as we want, will need to change source when changing program location
+            source: 'Earth2.png' #can change this image as we want, will need to change source when changing program location
             pos: self.pos
             size: self.size
             ''')
 
 class vpnScreen(Screen):
     def __init__(self, **kwargs):
-        super(vpnScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
@@ -66,26 +66,27 @@ class vpnScreen(Screen):
 
 class filterScreen(Screen):
     def __init__(self, **kwargs):
-        super(filterScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Filter configuration Screen', color=(0, 0, 0)))
 
 
 class statScreen(Screen):
     def __init__(self, **kwargs):
-        super(statScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Statistics Screen', color=(0, 0, 0)))
 
 
 class serverScreen(Screen):
     def __init__(self, **kwargs):
-        super(serverScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Server Management Screen', color=(0, 0, 0)))
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
         layout.add_widget(Button(text='Start Server'))
         layout.add_widget(Button(text='Stop Server'))
-        layout.add_widget(Button(text='Create Server'))
+        test = AwsInterface()
+        layout.add_widget(Button(text='Create Server', on_press=lambda x: test.create_server()))
         layout.add_widget(Button(text='Delete Server'))
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)

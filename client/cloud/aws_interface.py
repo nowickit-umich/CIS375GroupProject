@@ -1,8 +1,9 @@
-import cloudinterface
+#import cloudinterface
+from cloud.cloudinterface import CloudInterface
 
-class AwsInterface(cloudinterface):
-    def create_server():
-        pass
+class AwsInterface(CloudInterface):
+    def create_server(self):
+        print("Create Server Called!")
     
     def delete_server():
         pass
