@@ -1,3 +1,7 @@
+# THIS IS JUST A TEST
+# REMOVE FROM FINAL 
+# TODO
+
 import boto3
 
 IMAGEID=''
