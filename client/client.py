@@ -9,12 +9,8 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 
-# Managers - this should move
-vpn_manager = VPN_Manager()
-cloud_manager = Cloud_Manager()
-
 class vpnScreen(Screen):
-    def __init__(self, **kwargs):
+    def __init__(self, vpn_manager, **kwargs):
         super().__init__(**kwargs)
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
@@ -36,7 +32,7 @@ class statScreen(Screen):
         self.add_widget(Label(text='This is the Statistics Screen'))
 
 class serverScreen(Screen):
-    def __init__(self, **kwargs):
+    def __init__(self, cloud_manager, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Server Management Screen'))
 
@@ -56,14 +52,14 @@ class UI_DEMOApp(App):
         sm = ScreenManager()
 
         # Managers
-        #vpn_manager = VPN_Manager()
-        #cloud_manager = Cloud_Manager()
+        vpn_manager = VPN_Manager()
+        cloud_manager = Cloud_Manager()
 
         # Add screens
-        sm.add_widget(vpnScreen(name='vpn'))
+        sm.add_widget(vpnScreen(vpn_manager, name='vpn'))
         sm.add_widget(filterScreen(name='filters'))
         sm.add_widget(statScreen(name='stat'))
-        sm.add_widget(serverScreen(name='server'))
+        sm.add_widget(serverScreen(cloud_manager, name='server'))
 
         # Create a layout for the menu bar
         menu_bar = BoxLayout(size_hint_y=None, height=50)
