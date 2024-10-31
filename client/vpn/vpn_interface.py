@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
+import platform
 
-class VPNInterface(ABC):
+class VPN_Interface(ABC):
+    def __init__(self):
+        pass
+
     @abstractmethod
     def connect():
         pass

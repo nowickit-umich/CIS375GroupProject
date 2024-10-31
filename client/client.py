@@ -9,49 +9,55 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 
+# Managers - this should move
+vpn_manager = VPN_Manager()
+cloud_manager = Cloud_Manager()
+
 class vpnScreen(Screen):
     def __init__(self, **kwargs):
-        super(vpnScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
-        layout.add_widget(Button(text='Connect'))
-        layout.add_widget(Button(text='Disconnect'))
+        layout.add_widget(Button(text='Connect', on_press=lambda x:vpn_manager.connect()))
+        layout.add_widget(Button(text='Disconnect', on_press=lambda x:vpn_manager.disconnect()))
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)
         self.add_widget(Label(text='This is the VPN Connection Screen'))
 
 class filterScreen(Screen):
     def __init__(self, **kwargs):
-        super(filterScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Filter configuration Screen'))
 
 class statScreen(Screen):
     def __init__(self, **kwargs):
-        super(statScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Statistics Screen'))
 
 class serverScreen(Screen):
     def __init__(self, **kwargs):
-        super(serverScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.add_widget(Label(text='This is the Server Management Screen'))
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
-        layout.add_widget(Button(text='Start Server'))
-        layout.add_widget(Button(text='Stop Server'))
-        layout.add_widget(Button(text='Create Server'))
-        layout.add_widget(Button(text='Delete Server'))
+        layout.add_widget(Button(text='Start Server', on_press=lambda x:cloud_manager.start_server()))
+        layout.add_widget(Button(text='Stop Server', on_press=lambda x:cloud_manager.stop_server()))
+        layout.add_widget(Button(text='Create Server', on_press=lambda x:cloud_manager.create_server()))
+        layout.add_widget(Button(text='Delete Server', on_press=lambda x:cloud_manager.delete_server()))
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)
 
 class UI_DEMOApp(App):
+
+
     def build(self):
         sm = ScreenManager()
 
         # Managers
-        vpn_manager = VPN_Manager()
-        cloud_manager = Cloud_Manager()
+        #vpn_manager = VPN_Manager()
+        #cloud_manager = Cloud_Manager()
 
         # Add screens
         sm.add_widget(vpnScreen(name='vpn'))
