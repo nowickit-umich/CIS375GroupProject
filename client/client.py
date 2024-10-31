@@ -1,5 +1,7 @@
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
+from statistics_manager import Stats_Manager
+from filter_manager import Filter_Manager
 
 #UI Imports
 from kivy.app import App
@@ -54,6 +56,8 @@ class UI_DEMOApp(App):
         # Managers
         vpn_manager = VPN_Manager()
         cloud_manager = Cloud_Manager()
+        filter_manager = Filter_Manager()
+        stats_manager = Stats_Manager()
 
         # Add screens
         sm.add_widget(vpnScreen(vpn_manager, name='vpn'))
