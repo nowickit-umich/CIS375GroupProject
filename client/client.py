@@ -1,4 +1,4 @@
-#import kivy
+import kivy
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
@@ -17,12 +17,13 @@ import time
 from kivy.properties import StringProperty
 from cloud.aws_interface import AwsInterface
 
+
 #This sets background color, has no impact unless the background image is commented out or removed
 #Window.clearcolor = (1,1,1)
 
 #Change window size on startup, may have to change later.
-Window.size = (800,600)
-#Window.borderless = True
+Window.size = (1200,750)
+
 
 #Background image
 Builder.load_string('''
@@ -31,62 +32,105 @@ Builder.load_string('''
         BorderImage:
             #BorderImage behaves like the CSS BorderImage
             border: 10, 10, 10, 10
-            source: 'Earth2.png' #can change this image as we want, will need to change source when changing program location
+            source: 'images/Earth2.png' #can change this image as we want, will need to change source when changing program location
             pos: self.pos
             size: self.size
             ''')
 
 class vpnScreen(Screen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(vpnScreen, self).__init__(**kwargs)
+
+        #building clock feature
+        self.timerunning = 0 #set timer to 0
+        self.clockstatus = False #determine if clock is running, true means it is
+        self.time_label = Label(text = "00:00:00", font_size = 25, pos = (160, -40), color = (0,0,0), bold = True)
+        self.statuslabel = Label(text = "Disconnected" , font_size = 50, color = (20,0,0), pos = (0,10), bold = True)
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
 
         #check color on kivy.org
-        layout.add_widget(Button(text='Connect', background_color=(0, 0, 20)))
+        layout.add_widget(Button(text='Connect', background_color=(0, 0, 20), on_press = self.startclock)) #start clock
 
         #call connect function
 
-        layout.add_widget(Button(text='Disconnect', background_color=(20, 0, 0)))
+        layout.add_widget(Button(text='Disconnect', background_color=(20, 0, 0) , on_press = self.stopclock)) #stop clock
+
         #call disconnect function
+
+        Clock.schedule_interval(self.updateclock, 1)
+        Clock.schedule_interval(self.updatestatus, .02)
 
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)
         # self.add_widget(Label(text='This is the VPN Connection Screen'))
 
         # can add a font style in project folder to change display font
-        self.add_widget(Label(text='Status: ', color=(0, 0, 0), font_size=50, pos=(0,40), bold=True))
-        self.add_widget(Label(text='Time Connected - ', color=(0, 0, 0), font_size = 25, pos = (0,-40), bold = True)) #add stopwatch here, starts when vpn connect
+        self.add_widget(Label(text='Status: ', color=(0, 0, 0), font_size=50, pos=(0,60), bold=True))
+
+
+        self.add_widget(self.statuslabel)
+
+
+        self.add_widget(Label(text='Time Connected -', color=(0, 0, 0), font_size = 25, pos = (0,-40), bold = True)) #add stopwatch here, starts when vpn connect
+
+
+        self.add_widget(self.time_label)
+
         self.add_widget(Label(text='IP Address - ', color=(0, 0, 0), font_size = 25, pos = (0,-80), bold = True)) #create function to read ip address
+
         self.add_widget(Label(text='Ping ms ', color=(0, 0, 0), font_size = 25, pos = (0,-120), bold = True)) #create function to read ping
 
+    def startclock(self, instance):
+        #call connect
+        self.timerunning = time.time()
 
+        self.clockstatus = True
 
+    def stopclock(self, instance):
+        #call disconnect
+        self.clockstatus = False
+        self.time_label.text = "00:00:00"
+
+    def updateclock(self, dt):
+        if self.clockstatus:
+            timespent = int(time.time() - self.timerunning) #might be time.time() - self.timer_start_time
+
+            hours, remainder = divmod(timespent, 3600)
+            mins, seconds = divmod(remainder, 60)
+            self.time_label.text = f"{hours:02}:{mins:02}:{seconds:02}"
+
+    def updatestatus(self, dt):
+        if self.clockstatus:
+            self.statuslabel.text = "Connected"
+            self.statuslabel.color = (0,20,0)
+        else:
+            self.statuslabel.text = "Disconnected"
+            self.statuslabel.color = (20, 0, 0)
 
 class filterScreen(Screen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(filterScreen, self).__init__(**kwargs)
         self.add_widget(Label(text='This is the Filter configuration Screen', color=(0, 0, 0)))
 
 
 class statScreen(Screen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(statScreen, self).__init__(**kwargs)
         self.add_widget(Label(text='This is the Statistics Screen', color=(0, 0, 0)))
 
 
 class serverScreen(Screen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(serverScreen, self).__init__(**kwargs)
         self.add_widget(Label(text='This is the Server Management Screen', color=(0, 0, 0)))
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
         layout.add_widget(Button(text='Start Server'))
         layout.add_widget(Button(text='Stop Server'))
-        test = AwsInterface()
-        layout.add_widget(Button(text='Create Server', on_press=lambda x: test.create_server()))
+        layout.add_widget(Button(text='Create Server'))
         layout.add_widget(Button(text='Delete Server'))
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)
@@ -126,6 +170,7 @@ class UI_DEMOApp(App):
 
     def update_ClockTime(self, dt):
         self.TimeClock.text = time.strftime(("%A, %B %d %Y %I:%M:%S %p %Z"))
+        #self.TimeClock.text = time.strftime(("%c"))
         #could do %c, which displays Sun Sep 8 07:06:05 2013
         #idea behind including time zone name is if we change the server to a different location, the time zone could change
         #even if we don't let user change region it makes the software easier to improve in the future
