@@ -3,6 +3,8 @@ from vpn_manager import VPN_Manager
 from statistics_manager import Stats_Manager
 from filter_manager import Filter_Manager
 
+import asyncio
+
 #UI Imports
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -17,7 +19,7 @@ class vpnScreen(Screen):
 
         bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
         layout = BoxLayout()
-        layout.add_widget(Button(text='Connect', on_press=lambda x:vpn_manager.connect()))
+        layout.add_widget(Button(text='Connect', on_press=lambda x:asyncio.run(vpn_manager.connect())))
         layout.add_widget(Button(text='Disconnect', on_press=lambda x:vpn_manager.disconnect()))
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)

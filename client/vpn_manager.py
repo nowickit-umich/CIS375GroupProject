@@ -10,8 +10,8 @@ class VPN_Manager():
             quit()
         pass
 
-    def connect(self):
-        self.vpn.connect()
+    async def connect(self):
+        await self.vpn.create_profile()
         return
     
     def disconnect(self):
