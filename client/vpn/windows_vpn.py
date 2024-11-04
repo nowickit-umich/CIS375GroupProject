@@ -40,7 +40,7 @@ class Windows_VPN(VPN_Interface):
         await self.agent.DeleteProfileAsync(self.profile_name)
     
     async def connect(self):
-        
+        print("\n VPN CONNECT \n")
         # sets the configuration, could use a custom config
         config = VpnChannelConfiguration()
         config.ServerServiceName = self.server_uri
@@ -52,5 +52,6 @@ class Windows_VPN(VPN_Interface):
     
     async def disconnect(self):
         # disconnects vpn
+        print("\n VPN DISCONNECT \n")
         await self.channel.Stop()
         self.channel = None
