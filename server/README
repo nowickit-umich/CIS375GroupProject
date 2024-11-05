@@ -1,15 +1,20 @@
 Dev/Testing Server setup:
 
 1. Create AWS EC2 instance
-    - Ubuntu 24.04 (ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20240927)
+    - Ubuntu 24.04 (ami-0ea3c35c5c3284d82)
+    - Type: t2.micro
     - Security Group: Allow UDP 500 and UDP 4500 from any ipv4/ipv6
 
-2. Clone github repo
+2. Use ssh to connect to server
+    - $ ssh -i <keyfile> ubuntu@<serverIP>
+
+3. Clone github repo
     - $ git clone https://github.com/nowickit-umich/CIS375GroupProject.git
 
-3. Run setup script
+4. Run setup script
     - $ sudo chmod +x CIS375GroupProject/server/setup.sh
     - $ sudo ./CIS375GroupProject/server/setup.sh
+    - Enter a password when prompted. This will be the password used to connect to the VPN.
 
 NOTES:
 IP address is listed in instance summary. This IP address will change if the server is stopped or restarted.
