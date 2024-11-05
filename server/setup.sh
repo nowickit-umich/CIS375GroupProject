@@ -83,11 +83,11 @@ sed -i -e "s/%IP%/$IP/g" $SPATH/config/swanctl.conf
 cp $SPATH/config/swanctl.conf /etc/swanctl/swanctl.conf
 cp $SPATH/config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 
-cp $SPATH/templates/cert.template $SPATH/config/certs/cert.conf
-sed -i -e "s/%IP%/$IP/g" $SPATH/config/certs/cert.conf
+cp $SPATH/templates/cert.template $SPATH/config/cert.conf
+sed -i -e "s/%IP%/$IP/g" $SPATH/config/cert.conf
 
 #Certificate Config
-openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -sha256 -days 3650 -nodes -config $SPATH/config/certs/cert.conf
+openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -sha256 -days 3650 -nodes -config $SPATH/config/cert.conf
 
 mv $SPATH/key.pem /etc/swanctl/private/key.pem
 mv $SPATH/cert.pem /etc/swanctl/x509/cert.pem
