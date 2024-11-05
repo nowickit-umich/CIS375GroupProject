@@ -47,7 +47,6 @@ pools {
 secrets {
         eap-user {
                 id=user
-		#TODO
-                secret=11111111
+                secret=%pw%
         }
 }

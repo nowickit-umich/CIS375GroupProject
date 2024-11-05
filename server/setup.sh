@@ -39,11 +39,6 @@ nft add rule ip filter input udp dport 4500 accept
 #Save Firewall Config
 nft list ruleset > /etc/nftables.conf
 
-#Configure VPN
-#curl -o /etc/swanctl/swanctl.conf https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/swanctl.conf
-cp ./config/swanctl.conf /etc/swanctl/swanctl.conf
-cp ./config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
-
 IP="$(curl -s ifconfig.me)"
 if [[ -z "$IP" ]]
 then
@@ -59,7 +54,17 @@ then
         exit 1
 fi
 
-#curl https://raw.githubusercontent.com/nowickit-umich/CIS375GroupProject/refs/heads/main/server/config/cert/template.conf
+#Get user input to set password
+read -p "Set VPN password: " password
+
+#Configure VPN
+#TODO
+#move templates to sepatate dir
+#
+sed -i -e "s/%pw%/$password/g" ./config/swanctl.template
+sed -i -e "s/%IP%/$IP/g" ./config/swanctl.template
+cp ./config/swanctl.template /etc/swanctl/swanctl.conf
+cp ./config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 
 cp ./config/cert/template.conf cert.conf
 sed -i -e "s/%IP%/$IP/g" cert.conf

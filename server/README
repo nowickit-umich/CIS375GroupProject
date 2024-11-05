@@ -1,0 +1,23 @@
+Dev/Testing Server setup:
+
+1. Create AWS EC2 instance
+    - Ubuntu 24.04 (ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20240927)
+    - Security Group: Allow UDP 500 and UDP 4500 from any ipv4/ipv6
+
+2. Clone github repo
+    - $ git clone https://github.com/nowickit-umich/CIS375GroupProject.git
+
+3. Run setup script
+    - $ sudo chmod +x CIS375GroupProject/server/setup.sh
+    - $ sudo ./CIS375GroupProject/server/setup.sh
+
+NOTES:
+IP address is listed in instance summary. This IP address will change if the server is stopped or restarted.
+If the IP address changes, the setup script must be run again.
+
+VPN client settings:
+IKEv2
+Username: user
+Password: <Entered during setup>
+The server certificate can be found on the server in /etc/swanctl/x509/cert.pem
+
