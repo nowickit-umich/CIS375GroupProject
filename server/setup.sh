@@ -24,17 +24,17 @@ sysctl -p
 nft flush ruleset
 #VPN client NAT
 nft add table ip nat
-nft 'add chain ip nat postrouting { type nat hook postrouting priority 100; }'
+nft add chain ip nat postrouting '{ type nat hook postrouting priority 100; }'
 nft add rule ip nat postrouting ip saddr $CLIENT_NET oif $SERVER_INTERFACE masquerade
 
 #Allow traffic from VPN network
 nft add table ip filter
-nft 'add chain ip filter forward { type filter hook forward priority 0; }'
+nft add chain ip filter forward '{ type filter hook forward priority 0; }'
 nft add rule ip filter forward ip saddr $CLIENT_NET accept
 nft add rule ip filter forward ct state related,established accept
 
 #Allow VPN server traffic
-nft 'add chain ip filter input { type filter hook input priority 0; policy drop }'
+nft add chain ip filter input '{ type filter hook input priority 0; policy drop; }'
 nft add rule ip filter input tcp dport 22 accept
 nft add rule ip filter input udp dport 500 accept
 nft add rule ip filter input udp dport 4500 accept
@@ -61,6 +61,7 @@ fi
 read -p "Set VPN password: " password
 
 #Configure VPN
+mkdir $SPATH/config
 cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf
 sed -i -e "s/%pw%/$password/g" $SPATH/config/swanctl.conf
 sed -i -e "s/%IP%/$IP/g" $SPATH/config/swanctl.conf
