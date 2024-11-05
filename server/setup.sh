@@ -77,7 +77,6 @@ echo ""
 read -p "Set VPN password: " password
 
 #Configure VPN
-mkdir $SPATH/config
 cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf
 sed -i -e "s/%pw%/$password/g" $SPATH/config/swanctl.conf
 sed -i -e "s/%IP%/$IP/g" $SPATH/config/swanctl.conf
