@@ -35,9 +35,10 @@ class Windows_VPN(VPN_Interface):
         
     async def create_profile(self, server_uri="test", username="user", password="pass"):
         
-        store = CertificateStores.get_store_by_name(StandardCertificateStoreNames.trusted_root_certification_authorities)
+        store = CertificateStores.get_store_by_name(StandardCertificateStoreNames.personal)
         print("NAME:", store.name)
-        store.add()
+        tt = await CertificateStores.find_all_async()
+        print("ALL:", list(tt)[0].friendly_name)
         quit()
 
         certv = await store.find_all_async()
