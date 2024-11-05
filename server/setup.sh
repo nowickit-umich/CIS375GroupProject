@@ -40,6 +40,7 @@ nft add rule inet filter input tcp dport 22 accept
 nft add rule inet filter input udp dport 500 accept
 nft add rule inet filter input udp dport 4500 accept
 nft add rule inet filter input udp dport 53 accept
+nft add rule inet filter input tcp dport 53 accept
 
 nft add chain inet filter output '{ type filter hook output priority 0; policy drop; }'
 nft add rule inet filter output ct state related,established accept
@@ -47,7 +48,9 @@ nft add rule inet filter output tcp sport 22 accept
 nft add rule inet filter output udp sport 500 accept
 nft add rule inet filter output udp sport 4500 accept
 nft add rule inet filter output udp dport 53 accept
+nft add rule inet filter output tcp dport 53 accept
 nft add rule inet filter output udp dport 123 accept
+nft add rule inet filter output tcp dport 80 accept
 
 
 #Save Firewall Config
@@ -69,6 +72,8 @@ then
 fi
 
 #Get user input to set password
+echo "###################"
+echo ""
 read -p "Set VPN password: " password
 
 #Configure VPN
