@@ -18,7 +18,7 @@ if [ ! -f /etc/sysctl.d/forward.conf ]; then
         echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/forward.conf
 fi
 #Reload config
-sysctl -p
+sysctl -p /etc/sysctl.d/forward.conf
 
 #Configure Firewall
 nft flush ruleset
