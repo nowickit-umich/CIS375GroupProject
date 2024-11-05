@@ -58,20 +58,17 @@ fi
 read -p "Set VPN password: " password
 
 #Configure VPN
-#TODO
-#move templates to sepatate dir
-#
-sed -i -e "s/%pw%/$password/g" ./config/swanctl.template
-sed -i -e "s/%IP%/$IP/g" ./config/swanctl.template
-cp ./config/swanctl.template /etc/swanctl/swanctl.conf
+cp ./templates/swanctl.template ./config/swanctl.conf
+sed -i -e "s/%pw%/$password/g" ./config/swanctl.conf
+sed -i -e "s/%IP%/$IP/g" ./config/swanctl.conf
+cp ./config/swanctl.conf /etc/swanctl/swanctl.conf
 cp ./config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 
-cp ./config/cert/template.conf cert.conf
-sed -i -e "s/%IP%/$IP/g" cert.conf
+cp ./templates/cert.template ./config/certs/cert.conf
+sed -i -e "s/%IP%/$IP/g" ./config/certs/cert.conf
 
-sed -i -e "s/%IP%/$IP/g" /etc/swanctl/swanctl.conf
 #Certificate Config
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -config cert.conf
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -config ./config/certs/cert.conf
 
 mv key.pem /etc/swanctl/private/key.pem
 mv cert.pem /etc/swanctl/x509/cert.pem
