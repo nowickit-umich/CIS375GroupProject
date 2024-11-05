@@ -6,6 +6,8 @@
 CLIENT_NET="10.99.99.0/24"
 SERVER_INTERFACE="enX0"
 
+SPATH=$(dirname $(realpath "$0"))
+
 #Install VPN software
 apt update
 apt install curl charon-systemd strongswan-swanctl libcharon-extra-plugins -y
@@ -19,6 +21,7 @@ fi
 sysctl -p
 
 #Configure Firewall
+nft flush ruleset
 #VPN client NAT
 nft add table ip nat
 nft 'add chain ip nat postrouting { type nat hook postrouting priority 100; }'
@@ -58,22 +61,21 @@ fi
 read -p "Set VPN password: " password
 
 #Configure VPN
-cp ./templates/swanctl.template ./config/swanctl.conf
-sed -i -e "s/%pw%/$password/g" ./config/swanctl.conf
-sed -i -e "s/%IP%/$IP/g" ./config/swanctl.conf
-cp ./config/swanctl.conf /etc/swanctl/swanctl.conf
-cp ./config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
+cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf
+sed -i -e "s/%pw%/$password/g" $SPATH/config/swanctl.conf
+sed -i -e "s/%IP%/$IP/g" $SPATH/config/swanctl.conf
+cp $SPATH/config/swanctl.conf /etc/swanctl/swanctl.conf
+cp $SPATH/config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 
-cp ./templates/cert.template ./config/certs/cert.conf
-sed -i -e "s/%IP%/$IP/g" ./config/certs/cert.conf
+cp $SPATH/templates/cert.template $SPATH/config/certs/cert.conf
+sed -i -e "s/%IP%/$IP/g" $SPATH/config/certs/cert.conf
 
 #Certificate Config
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -config ./config/certs/cert.conf
+openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -sha256 -days 3650 -nodes -config $SPATH/config/certs/cert.conf
 
-mv key.pem /etc/swanctl/private/key.pem
-mv cert.pem /etc/swanctl/x509/cert.pem
+mv $SPATH/key.pem /etc/swanctl/private/key.pem
+mv $SPATH/cert.pem /etc/swanctl/x509/cert.pem
 
 systemctl restart strongswan
 systemctl enable strongswan
-
 
