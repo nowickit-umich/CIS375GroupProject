@@ -25,4 +25,9 @@ IKEv2
 Username: user
 Password: <Entered during setup>
 The server certificate can be found on the server in /etc/swanctl/x509/cert.pem
+Certificate should be installed as a trusted root certificate (This may change)
+
+Get cert with scp:
+    - $ scp -i <keyfile> ubuntu@<serverIP>:/etc/swanctl/x509/cert.pem cert.pem
+
 
