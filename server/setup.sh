@@ -32,10 +32,13 @@ nft add table inet filter
 nft add chain inet filter forward '{ type filter hook forward priority 0; }'
 nft add rule inet filter forward ip saddr $CLIENT_NET accept
 nft add rule inet filter forward ct state related,established accept
+nft add rule inet filter forward ct state invalid drop
 
 #Allow VPN server traffic
 nft add chain inet filter input '{ type filter hook input priority 0; policy drop; }'
 nft add rule inet filter input ct state related,established accept
+nft add rule inet filter input ct state invalid drop
+nft add rule inet filter input iifname lo accept
 nft add rule inet filter input tcp dport 22 accept
 nft add rule inet filter input udp dport 500 accept
 nft add rule inet filter input udp dport 4500 accept
@@ -44,6 +47,8 @@ nft add rule inet filter input tcp dport 53 accept
 
 nft add chain inet filter output '{ type filter hook output priority 0; policy drop; }'
 nft add rule inet filter output ct state related,established accept
+nft add rule inet filter output ct state invalid drop
+nft add rule inet filter output iifname lo accept
 nft add rule inet filter output tcp sport 22 accept
 nft add rule inet filter output udp sport 500 accept
 nft add rule inet filter output udp sport 4500 accept
