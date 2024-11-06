@@ -1,0 +1,40 @@
+table inet nat {
+	chain postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		ip saddr %CLIENT_NET% oif "%SERVER_INTERFACE%" masquerade
+	}
+}
+table inet filter {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ip saddr %CLIENT_NET% accept
+		ct state established,related accept
+		ct state invalid drop
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		ct state established,related accept
+		ct state invalid drop
+		iifname "lo" accept
+		tcp dport 22 accept
+		udp dport 500 accept
+		udp dport 4500 accept
+		udp dport 53 accept
+		tcp dport 53 accept
+	}
+
+	chain output {
+		type filter hook output priority filter; policy drop;
+		ct state established,related accept
+		ct state invalid drop
+		iifname "lo" accept
+		tcp sport 22 accept
+		udp sport 500 accept
+		udp sport 4500 accept
+		udp dport 53 accept
+		tcp dport 53 accept
+		udp dport 123 accept
+		tcp dport 80 accept
+	}
+}

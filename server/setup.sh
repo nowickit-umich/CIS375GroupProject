@@ -21,46 +21,14 @@ fi
 sysctl -p /etc/sysctl.d/forward.conf
 
 #Configure Firewall
-nft flush ruleset
-#VPN client NAT
-nft add table inet nat
-nft add chain inet nat postrouting '{ type nat hook postrouting priority 100; }'
-nft add rule inet nat postrouting ip saddr $CLIENT_NET oif $SERVER_INTERFACE masquerade
+/usr/sbin/nft flush ruleset
+cp $SPATH/templates/nftables.template $SPATH/config/nftables.conf
+sed -i -e "s/%CLIENT_NET%/$CLIENT_NET/g" $SPATH/config/nftables.conf
+sed -i -e "s/%SERVER_INTERFACE%/$SERVER_INTERFACE/g" $SPATH/config/nftables.conf
+cp $SPATH/config/nftables.conf /etc/nftables.conf
+/usr/sbin/nft -f nftables.conf
 
-#Allow traffic from VPN network
-nft add table inet filter
-nft add chain inet filter forward '{ type filter hook forward priority 0; }'
-nft add rule inet filter forward ip saddr $CLIENT_NET accept
-nft add rule inet filter forward ct state related,established accept
-nft add rule inet filter forward ct state invalid drop
-
-#Allow VPN server traffic
-nft add chain inet filter input '{ type filter hook input priority 0; policy drop; }'
-nft add rule inet filter input ct state related,established accept
-nft add rule inet filter input ct state invalid drop
-nft add rule inet filter input iifname lo accept
-nft add rule inet filter input tcp dport 22 accept
-nft add rule inet filter input udp dport 500 accept
-nft add rule inet filter input udp dport 4500 accept
-nft add rule inet filter input udp dport 53 accept
-nft add rule inet filter input tcp dport 53 accept
-
-nft add chain inet filter output '{ type filter hook output priority 0; policy drop; }'
-nft add rule inet filter output ct state related,established accept
-nft add rule inet filter output ct state invalid drop
-nft add rule inet filter output iifname lo accept
-nft add rule inet filter output tcp sport 22 accept
-nft add rule inet filter output udp sport 500 accept
-nft add rule inet filter output udp sport 4500 accept
-nft add rule inet filter output udp dport 53 accept
-nft add rule inet filter output tcp dport 53 accept
-nft add rule inet filter output udp dport 123 accept
-nft add rule inet filter output tcp dport 80 accept
-
-
-#Save Firewall Config
-nft list ruleset > /etc/nftables.conf
-
+#Get server Public IP
 IP="$(curl -s ifconfig.me)"
 if [[ -z "$IP" ]]
 then
