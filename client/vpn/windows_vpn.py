@@ -1,5 +1,7 @@
 import asyncio
 import winrt.windows.networking.vpn
+# I'm not sure if winrt even supports cert management. 
+# win32 seems easier to use - wincrypt.h
 import winrt.windows.security.cryptography.certificates
 from winrt.windows.security.cryptography.certificates import (
     Certificate,
@@ -62,7 +64,6 @@ class Windows_VPN(VPN_Interface):
 
         vv = await self.agent.get_profiles_async()
         #print(list(vv)[0].eap_configuration)
-
 
         # adds profile
         res = await self.agent.add_profile_from_object_async(profile)
