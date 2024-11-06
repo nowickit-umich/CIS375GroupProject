@@ -5,13 +5,22 @@
 
 CLIENT_NET="10.99.99.0/24"
 SERVER_INTERFACE="enX0"
-
+LOCAL_ADDR=$(hostname -I)
 SPATH=$(dirname $(realpath "$0"))
 
 #Install VPN software
 apt update
-apt install curl charon-systemd strongswan-swanctl libcharon-extra-plugins -y
+apt install curl charon-systemd strongswan-swanctl libcharon-extra-plugins dnsmasq -y
 apt remove strongswan-starter strongswan-charon -y
+
+#Setup DNS
+systemctl disable systemd-resolved
+systemctl stop systemd-resolved
+cp $SPATH/templates/dnsmasq.template $SPATH/config/dnsmasq.conf
+sed -i -e "s/%SERVER_INTERFACE%/$SERVER_INTERFACE/g" $SPATH/config/dnsmasq.conf
+cp $SPATH/config/dnsmasq.conf /etc/dnsmasq.d/dnsmasq.conf
+systemctl enable dnsmasq
+systemctl start dnsmasq
 
 #Enable forwarding
 if [ ! -f /etc/sysctl.d/forward.conf ]; then
@@ -51,8 +60,10 @@ read -p "Set VPN password: " password
 
 #Configure VPN
 cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf
-sed -i -e "s/%pw%/$password/g" $SPATH/config/swanctl.conf
+sed -i -e "s/%PW%/$password/g" $SPATH/config/swanctl.conf
 sed -i -e "s/%IP%/$IP/g" $SPATH/config/swanctl.conf
+sed -i -e "s/%CLIENT_NET%/$CLIENT_NET/g" $SPATH/config/swanctl.conf
+sed -i -e "s/%LOCAL_ADDR%/$LOCAL_ADDR/g" $SPATH/config/swanctl.conf
 cp $SPATH/config/swanctl.conf /etc/swanctl/swanctl.conf
 cp $SPATH/config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 

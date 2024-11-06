@@ -15,20 +15,16 @@ connections {
                 pools=virt
                 #Needed for Android
                 send_cert=always
-
-
                 local {
                         auth=pubkey
                         certs=cert.pem
                         id=%IP%
                 }
-
                 remote {
                         auth=eap-dynamic
                         id=%any
                         eap_id=%any
                 }
-
                 children {
                         eap {
                                 local_ts=0.0.0.0/0
@@ -39,14 +35,14 @@ connections {
 
 pools {
         virt {
-                addrs=10.99.99.0/24
-                dns=1.1.1.1
+                addrs=%CLIENT_NET%
+                dns=%LOCAL_ADDR%
 	}
 }
 
 secrets {
         eap-user {
                 id=user
-                secret=%pw%
+                secret=%PW%
         }
 }
