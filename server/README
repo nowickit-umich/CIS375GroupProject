@@ -6,14 +6,14 @@ Dev/Testing Server setup:
     - Security Group: Allow UDP 500 and UDP 4500 from any ipv4/ipv6
 
 2. Use ssh to connect to server
-    - $ ssh -i <keyfile> ubuntu@<serverIP>
+    - (client)$> ssh -i <keyfile> ubuntu@<serverIP>
 
 3. Clone github repo
-    - $ git clone https://github.com/nowickit-umich/CIS375GroupProject.git
+    - (server)$> git clone https://github.com/nowickit-umich/CIS375GroupProject.git
 
 4. Run setup script
-    - $ sudo chmod +x CIS375GroupProject/server/setup.sh
-    - $ sudo ./CIS375GroupProject/server/setup.sh
+    - (server)$> sudo chmod +x CIS375GroupProject/server/setup.sh
+    - (server)$> sudo ./CIS375GroupProject/server/setup.sh
     - Enter a password when prompted. This will be the password used to connect to the VPN.
 
 NOTES:
@@ -28,6 +28,6 @@ The server certificate can be found on the server in /etc/swanctl/x509/cert.pem
 Certificate should be installed as a trusted root certificate (This may change)
 
 Get cert with scp:
-    - $ scp -i <keyfile> ubuntu@<serverIP>:/etc/swanctl/x509/cert.pem cert.pem
+    - (client)$> scp -i <keyfile> ubuntu@<serverIP>:/etc/swanctl/x509/cert.pem cert.pem
 
 
