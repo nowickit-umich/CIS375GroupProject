@@ -21,3 +21,10 @@ class Cloud_Manager():
     def stop_server(self):
         self.cloud.stop_server()
         return
+    
+    def get_status():
+        return
+    
+    def get_cert():
+        return
+    

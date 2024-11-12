@@ -34,16 +34,17 @@ class Windows_VPN(VPN_Interface):
         self.profile_name = "pythonTest"
         self.server_uri = None
         self.credentials = None
-        
+
     async def create_profile(self, server_uri="test", username="user", password="pass"):
         
+        # Certificate store seems to be isolated from the system. 
         store = CertificateStores.get_store_by_name(StandardCertificateStoreNames.trusted_root_certification_authorities)
         print("NAME:", store.name)
-
+        # Need to figure out how to add the certificate from a cert.pem file
         print(CertificateStores.trusted_root_certification_authorities.name)
         #   store.add()
         
-        store.add("test")
+        #store.add("test")
 
         tt = await CertificateStores.find_all_async()
         for x in tt:
@@ -52,7 +53,9 @@ class Windows_VPN(VPN_Interface):
         #certv = await store.find_all_async()
         #print(list(certv)[0].friendly_name)
 
-        # creates profile with the parameters
+        # Need to delete the profile if it already exists
+
+        # create profile
         profile = VpnNativeProfile()
         profile.profile_name = self.profile_name
         profile.servers.append(server_uri)
