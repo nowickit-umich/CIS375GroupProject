@@ -1,3 +1,10 @@
+
+from cloud_manager import Cloud_Manager
+from vpn_manager import VPN_Manager
+from statistics_manager import Stats_Manager
+from filter_manager import Filter_Manager
+
+#UI Imports
 import kivy
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -15,7 +22,14 @@ from kivy.lang import Builder
 from kivy.uix.popup import Popup
 import time
 from kivy.properties import StringProperty
-from cloud.aws_interface import AwsInterface
+from kivy.uix.popup import Popup
+from kivy.factory import Factory
+from kivy.uix.gridlayout import GridLayout
+#from kivy.config import Config
+from kivy.uix.textinput import TextInput
+
+
+#Config.set('graphics', 'resizable', True)
 
 
 #This sets background color, has no impact unless the background image is commented out or removed
@@ -24,6 +38,10 @@ from cloud.aws_interface import AwsInterface
 #Change window size on startup, may have to change later.
 Window.size = (1200,750)
 
+class UserServer:
+    def __init__(self, servname):
+        self.servname = servname
+        #let user change server name, could add more attributes to class to let user customize server more
 
 #Background image
 Builder.load_string('''
@@ -34,12 +52,15 @@ Builder.load_string('''
             border: 10, 10, 10, 10
             source: 'images/Earth2.png' #can change this image as we want, will need to change source when changing program location
             pos: self.pos
-            size: self.size
+            size: self.size          
             ''')
 
 class vpnScreen(Screen):
-    def __init__(self, **kwargs):
+    def __init__(self, vpn_manager, **kwargs):
         super(vpnScreen, self).__init__(**kwargs)
+
+        self.vpn_manager = vpn_manager
+
 
         #building clock feature
         self.timerunning = 0 #set timer to 0
@@ -53,11 +74,11 @@ class vpnScreen(Screen):
         #check color on kivy.org
         layout.add_widget(Button(text='Connect', background_color=(0, 0, 20), on_press = self.startclock)) #start clock
 
-        #call connect function
+
 
         layout.add_widget(Button(text='Disconnect', background_color=(20, 0, 0) , on_press = self.stopclock)) #stop clock
 
-        #call disconnect function
+
 
         Clock.schedule_interval(self.updateclock, 1)
         Clock.schedule_interval(self.updatestatus, .02)
@@ -73,7 +94,7 @@ class vpnScreen(Screen):
         self.add_widget(self.statuslabel)
 
 
-        self.add_widget(Label(text='Time Connected -', color=(0, 0, 0), font_size = 25, pos = (0,-40), bold = True)) #add stopwatch here, starts when vpn connect
+        self.add_widget(Label(text='Time Connected -', color=(0, 0, 0), font_size = 25, pos = (0,-40), bold = True))
 
 
         self.add_widget(self.time_label)
@@ -83,13 +104,14 @@ class vpnScreen(Screen):
         self.add_widget(Label(text='Ping ms ', color=(0, 0, 0), font_size = 25, pos = (0,-120), bold = True)) #create function to read ping
 
     def startclock(self, instance):
-        #call connect
+        self.vpn_manager.connect() #call from vpn_manager instead of directly from windows_vpn
+        #do this to make it easier to add functionality for other operating system
+        #could create another file called mac_vpn.py
         self.timerunning = time.time()
-
         self.clockstatus = True
 
     def stopclock(self, instance):
-        #call disconnect
+        self.vpn_manager.disconnect()
         self.clockstatus = False
         self.time_label.text = "00:00:00"
 
@@ -123,6 +145,8 @@ class statScreen(Screen):
 
 class serverScreen(Screen):
     def __init__(self, **kwargs):
+
+
         super(serverScreen, self).__init__(**kwargs)
         self.add_widget(Label(text='This is the Server Management Screen', color=(0, 0, 0)))
 
@@ -130,10 +154,61 @@ class serverScreen(Screen):
         layout = BoxLayout()
         layout.add_widget(Button(text='Start Server'))
         layout.add_widget(Button(text='Stop Server'))
-        layout.add_widget(Button(text='Create Server'))
+
+        create_popup = (Button(text='Create Server'))
+        create_popup.bind(on_release=self.createserver_popup)
+        layout.add_widget(create_popup)
+
         layout.add_widget(Button(text='Delete Server'))
+
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)
+
+    def createserver_popup(self, instance):
+        layout = BoxLayout(orientation = 'vertical')
+
+        layout.add_widget(Label(text = 'Enter Name for Server:', pos = (0,-40)))
+        #change position
+
+        #layout.add_widget(Label(text = 'Create Server Here, allow user to enter name to create server'))
+
+        #popup = Popup(title = 'test', auto_dismiss = True)
+
+        servername = TextInput(multiline=False, size_hint = (1,None), height = 100)
+        layout.add_widget(servername)
+
+        UserServer(servername)
+
+        close_button = Button(text = 'Create Server', size_hint_y= None, height = 40)
+        close_button.bind(on_release = lambda x: self.createserverobject(servername.text, popup))
+
+
+        #user has a popup that asks them to enter a server name to create a server
+        #user can only have 1 server at a time
+        #delete function clears the name of the server
+
+        layout.add_widget(close_button)
+
+        #popup = Popup(title = 'test', content = layout, size_hint = (.75, .75), auto_dismiss = True, background = None)
+
+        popup = Popup(title = 'Create A Server',
+                      content = layout,
+                      size_hint = (.75, .75),
+                      auto_dismiss = True,
+                      background_color = (1,1,1,1)
+                      )
+        #could remove title or make it empty to not have a title in pop up
+
+        #figure out how to get rid of blue tint in background
+
+        popup.open()
+
+
+    def createserverobject(self, servername, popup):
+        #doesn't check if name is empty or any test cases
+        new_server = UserServer(servername)
+        print(f"Server created: {new_server.servname}")  # Confirm server creation in the console
+        popup.dismiss()
 
 
 class UI_DEMOApp(App):
@@ -141,7 +216,12 @@ class UI_DEMOApp(App):
         sm = ScreenManager()
 
         # Add screens
-        sm.add_widget(vpnScreen(name='vpn'))
+        vpn_manager = VPN_Manager()
+        cloud_manager = Cloud_Manager()
+        filter_manager = Filter_Manager()
+        stats_manager = Stats_Manager()
+
+        sm.add_widget(vpnScreen(vpn_manager, name='vpn'))
         sm.add_widget(filterScreen(name='filters'))
         sm.add_widget(statScreen(name='stat'))
         sm.add_widget(serverScreen(name='server'))
