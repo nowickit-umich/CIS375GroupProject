@@ -1,2 +1,3 @@
 interface=%SERVER_INTERFACE%
 server=1.1.1.1
+log-queries
