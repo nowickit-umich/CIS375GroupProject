@@ -25,7 +25,7 @@ from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy.factory import Factory
 from kivy.uix.gridlayout import GridLayout
-#from kivy.config import Config
+from kivy.config import Config
 from kivy.uix.textinput import TextInput
 
 
@@ -38,11 +38,14 @@ from kivy.uix.textinput import TextInput
 #Change window size on startup, may have to change later.
 Window.size = (1200,750)
 
+"""
+serverexists = True #global variable to determine if a server exists, if true, a server does exist, if false, a server does not exist,
+#dont let user create more than 1 server
 class UserServer:
     def __init__(self, servname):
         self.servname = servname
         #let user change server name, could add more attributes to class to let user customize server more
-
+"""
 #Background image
 Builder.load_string('''
 <BoxLayout>
@@ -54,6 +57,51 @@ Builder.load_string('''
             pos: self.pos
             size: self.size          
             ''')
+
+class LoginScreen(Screen):
+    def __init__(self, **kwargs):
+        super(LoginScreen, self). __init__(**kwargs)
+
+        self.title = 'Login'
+        self.size = (.5,.5)
+
+        layout = GridLayout(cols = 2, spacing = 10, padding = 10)
+
+
+
+        layout.add_widget(Label(text = 'Enter Access Key:'))
+        self.accesskey = TextInput(multiline = False)
+        self.add_widget(self.accesskey)
+
+        layout.add_widget(Label(text = 'Enter Secret Access Key:', size_hint = (1,None), height = 100))
+        #servername = TextInput(multiline=False, size_hint = (1,None), height = 100)
+
+        self.secretkey = TextInput(multiline = False)
+        self.add_widget(self.secretkey)
+
+        self.submit = Button(text = "Validate Keys")
+        self.submit.bind(on_press = self.validate)
+        layout.add_widget(self.submit)
+
+        self.content = layout
+
+    def validate(self,instance):
+
+        #chatgpt example login, will change to read from a file on computer, with accesskey and secretkey stored on it
+
+        accesskey = self.accesskey.text
+        secretkey = self.secretkey.text
+
+
+
+        if self.accesskey.text == "a" and self.secretkey.text == "b":  # Example validation
+            #will call cloudmanager to read api key from file on local device?
+            self.manager.current = "vpn"  # Switch to main screen
+        else:
+            print("Invalid key")
+
+
+
 
 class vpnScreen(Screen):
     def __init__(self, vpn_manager, **kwargs):
@@ -156,7 +204,7 @@ class serverScreen(Screen):
         layout.add_widget(Button(text='Stop Server'))
 
         create_popup = (Button(text='Create Server'))
-        create_popup.bind(on_release=self.createserver_popup)
+        #create_popup.bind(on_release=self.createserver_popup)
         layout.add_widget(create_popup)
 
         layout.add_widget(Button(text='Delete Server'))
@@ -164,8 +212,10 @@ class serverScreen(Screen):
         bottom_bar.add_widget(layout)
         self.add_widget(bottom_bar)
 
+    """
     def createserver_popup(self, instance):
         layout = BoxLayout(orientation = 'vertical')
+        #use grid layout instead?
 
         layout.add_widget(Label(text = 'Enter Name for Server:', pos = (0,-40)))
         #change position
@@ -206,13 +256,24 @@ class serverScreen(Screen):
 
     def createserverobject(self, servername, popup):
         #doesn't check if name is empty or any test cases
+
+        global serverexists
+        serverexists = True
         new_server = UserServer(servername)
         print(f"Server created: {new_server.servname}")  # Confirm server creation in the console
         popup.dismiss()
 
+    def deleteserverobject(self, servername, popup):
 
+        global serverexists
+        serverexists = False
+        del UserServer #should remove userserver class
+"""
 class UI_DEMOApp(App):
     def build(self):
+
+        #create a login page
+
         sm = ScreenManager()
 
         # Add screens
@@ -221,10 +282,15 @@ class UI_DEMOApp(App):
         filter_manager = Filter_Manager()
         stats_manager = Stats_Manager()
 
+        login_screen = LoginScreen(name = 'login')
+        sm.add_widget(login_screen)
+
         sm.add_widget(vpnScreen(vpn_manager, name='vpn'))
         sm.add_widget(filterScreen(name='filters'))
         sm.add_widget(statScreen(name='stat'))
         sm.add_widget(serverScreen(name='server'))
+
+        sm.current = 'login'
 
         # Create a layout for the menu bar
 
@@ -244,6 +310,7 @@ class UI_DEMOApp(App):
         main_layout.add_widget(menu_bar)
         main_layout.add_widget(self.TimeClock)
         main_layout.add_widget(sm)
+
 
 
         return main_layout
