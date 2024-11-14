@@ -38,20 +38,8 @@ cp $SPATH/config/nftables.conf /etc/nftables.conf
 /usr/sbin/nft -f /etc/nftables.conf
 
 #Get server Public IP
-IP="$(curl -s ifconfig.me)"
-if [[ -z "$IP" ]]
-then
-        IP="$(curl -s ipinfo.io/ip)"
-fi
-if [[ -z "$IP" ]]
-then
-        IP="$(curl -s icanhazip.com)"
-fi
-if [[ -z "$IP" ]]
-then
-        echo "Failed to get IP"
-        exit 1
-fi
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 120"`
+IP=`curl http://169.254.169.254/latest/meta-data/profile -H "X-aws-ec2-metadata-token: $TOKEN"`
 
 #Get user input to set password
 echo "###################"
