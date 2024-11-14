@@ -1,8 +1,8 @@
 import asyncio
 import winrt.windows.networking.vpn
-# I'm not sure if winrt even supports cert management. 
-# win32 seems easier to use - wincrypt.h
+
 import winrt.windows.security.cryptography.certificates
+import subprocess
 from winrt.windows.security.cryptography.certificates import (
     Certificate,
     CertificateStores,
@@ -35,23 +35,17 @@ class Windows_VPN(VPN_Interface):
         self.server_uri = None
         self.credentials = None
 
+    def install_cert(self, path):
+        cmd = f'\'-Command Import-Certificate -FilePath \"{path}\" -CertStoreLocation Cert:\LocalMachine\Root\''
+        admin_cmd = f'Powershell -Command Start-Process -Verb RunAs -WindowStyle Hidden -FilePath \"PowerShell.exe\" -ArgumentList {cmd}'
+        subprocess.run(admin_cmd, creationflags=subprocess.CREATE_NO_WINDOW, shell=True)
+
     async def create_profile(self, server_uri="test", username="user", password="pass"):
         
-        # Certificate store seems to be isolated from the system. 
-        store = CertificateStores.get_store_by_name(StandardCertificateStoreNames.trusted_root_certification_authorities)
-        print("NAME:", store.name)
-        # Need to figure out how to add the certificate from a cert.pem file
-        print(CertificateStores.trusted_root_certification_authorities.name)
-        #   store.add()
-        
-        #store.add("test")
-
-        tt = await CertificateStores.find_all_async()
-        for x in tt:
-            print(x)
-
-        #certv = await store.find_all_async()
-        #print(list(certv)[0].friendly_name)
+        path = "C:\\Users\\Ted\\Documents\\CIS375\\CIS375GroupProject\\client\\cert.pem"
+        # Working cert install function
+        self.install_cert(path)
+        quit()
 
         # Need to delete the profile if it already exists
 
