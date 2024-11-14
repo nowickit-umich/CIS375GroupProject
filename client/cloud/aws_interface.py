@@ -17,6 +17,7 @@ class AwsInterface(CloudInterface):
         print("\n STOP SERVER \n")
         pass
 
+    # return -1 on error
     def init_cloud(self):
         pass
 

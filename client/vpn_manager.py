@@ -18,3 +18,8 @@ class VPN_Manager():
         self.vpn.disconnect()
         return
     
+    # return the connection status of the vpn
+    # True = connected
+    # False = disconnected
+    def status():
+        return
