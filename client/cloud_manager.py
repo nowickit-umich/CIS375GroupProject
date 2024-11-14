@@ -21,8 +21,8 @@ class Cloud_Manager():
             return []
         return file.readline().split()
 
-    def create_server(self):
-        self.cloud.create_server()
+    def create_server(self, region):
+        self.cloud.create_server(region)
         return
 
     def delete_server(self):

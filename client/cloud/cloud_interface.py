@@ -4,6 +4,7 @@ class CloudInterface(ABC):
     #Create a new server
     @abstractmethod
     def create_server():
+        
         pass
     
     #Delete the server 
