@@ -39,7 +39,7 @@ cp $SPATH/config/nftables.conf /etc/nftables.conf
 
 #Get server Public IP
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 120"`
-IP=`curl http://169.254.169.254/latest/meta-data/profile -H "X-aws-ec2-metadata-token: $TOKEN"`
+IP=`curl http://169.254.169.254/latest/meta-data/public-ipv4 -H "X-aws-ec2-metadata-token: $TOKEN"`
 
 #Get user input to set password
 echo "###################"
