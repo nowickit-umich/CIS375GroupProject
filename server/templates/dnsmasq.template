@@ -1,3 +1,8 @@
 interface=%SERVER_INTERFACE%
 server=1.1.1.1
-log-queries
+log-queries=extra
+log-facility=/var/log/dns
+log-async=25
+no-resolv
+domain-needed
+bogus-priv
