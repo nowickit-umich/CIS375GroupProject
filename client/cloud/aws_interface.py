@@ -99,6 +99,8 @@ class AwsInterface(CloudInterface):
 
         # Get image (AMI) id
         
+        IMAGEID = None
+        SSHKEY = None
 
         resource.create_instances(
                 BlockDeviceMappings=[{
@@ -126,7 +128,7 @@ class AwsInterface(CloudInterface):
                 #UserData='',
                 #ElasticGpuSpecification=[],
                 #ElasticInferenceAccelerators=[],
-                TagSpecifications=['ResourceType':'instance', 'Tags':[{'Key':'cisvpn','Value':'delete'}]],
+                #TagSpecifications=['ResourceType':'instance', 'Tags':[{'Key':'cisvpn','Value':'delete'}]],
                 #LaunchTemplate={},
                 #InstanceMarketOptions={},
                 CreditSpecification={'CpuCredits':'standard'},
