@@ -87,7 +87,7 @@ class Windows_VPN(VPN_Interface):
 
     async def delete_profile(self):
         # deletes profile
-        await self.agent.DeleteProfileAsync(self.profile_name)
+        await self.agent.delete_profile_async(self.profile_name)
     
     async def connect(self):
         self.agent.connect_profile_async(self.profile)
@@ -100,5 +100,5 @@ class Windows_VPN(VPN_Interface):
     
     async def disconnect(self):
         # disconnects vpn
-        await self.channel.Stop()
-        self.channel = None
+        await self.agent.disconnect_profile_async(self.profile)
+        # self.channel = None
