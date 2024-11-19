@@ -24,7 +24,7 @@ class CloudInterface(ABC):
 
     #setup cloud enviornment
     @abstractmethod
-    def init_cloud():
+    def test_key():
         pass
 
     #Remove all resources from the cloud service

@@ -1,27 +1,21 @@
 from cloud.cloud_interface import CloudInterface 
 import boto3
+import botocore.exceptions as be
+import asyncio
 
 
 class AwsInterface(CloudInterface):
-    def __init__(self):
-        try:
-            keyfile = open("./cloud/aws.secret")
-        except:
-            raise Exception("Failed to open AWS key file.")
-        self.session = boto3.Session(
-            aws_access_key_id=keyfile.readline().strip(),
-            aws_secret_access_key=keyfile.readline().strip(),
+
+    def create_server(self, api_key, region):
+        session = boto3.Session(
+            aws_access_key_id=api_key[0],
+            aws_secret_access_key=api_key[1],
         )
-
-
-    def create_server(self, region):
-        resource = self.session.resource('ec2', region_name=region)
-        client = self.session.client('ec2', region_name=region)
-
+        resource = session.resource('ec2', region_name=region)
+        client = session.client('ec2', region_name=region)
 
         #response = client.describe_security_groups(GroupNames=["ALLOW_VPN"])
         
-
         #Configure security group - input firewall
         response = client.create_security_group(
             Description='vpn security group',
@@ -99,73 +93,70 @@ class AwsInterface(CloudInterface):
 
         # Get image (AMI) id
         
-        IMAGEID = None
-        SSHKEY = None
-
-        resource.create_instances(
-                BlockDeviceMappings=[{
-                    'Ebs': {
-                        'DeleteOnTermination': True,
-                        'Iops': 3000,
-                        'VolumeSize': 5,
-                        'VolumeType': 'gp3',
-                        'Throughput': 125,
-                        'Encrypted': False
-                    },
-                    'DeviceName': 'xvda',
-                }],
-                ImageId=IMAGEID,
-                InstanceType='t2.micro',
-                KeyName=SSHKEY,
-                MaxCount=1,
-                MinCount=1,
-                Monitoring={'Enabled':False},
-                #Placement={},
-                #RamdiskId='',
-                #SecurityGroupIds=[SECGROUPID],
-                #SecurityGroups=[],
-                #SubnetId='',
-                #UserData='',
-                #ElasticGpuSpecification=[],
-                #ElasticInferenceAccelerators=[],
-                #TagSpecifications=['ResourceType':'instance', 'Tags':[{'Key':'cisvpn','Value':'delete'}]],
-                #LaunchTemplate={},
-                #InstanceMarketOptions={},
-                CreditSpecification={'CpuCredits':'standard'},
-                #CpuOptions={},
-                CapacityReservationSpecification={'CapacityReservationPreference':'none'},
-                #HibernationOptions={},
-                #LicenseSpecifications={},
-                #MetadataOptions={},
-                #EnclaveOptions={},
-                #PrivateDnsNameOptions={},
-                #MaintenanceOptions={},
-                DisableApiStop=False,
-                EnablePrimaryIpv6=False,
-                DryRun=False,
-                DisableApiTermination=False,
-                InstanceInitiatedShutdownBehavior='terminate',
-                #PrivateIpAddress=,
-                #ClientToken=,
-                #AdditionalInfo=,
-                NetworkInterfaces=[{
-                    'AssociatePublicIpAddress': True,
-                    'DeleteOnTermination':True,
-                    'Description':'InterfaceDescription',
-                    'DeviceIndex':0,
-                    'Groups':[sec_group_id],
-                    'Ipv6AddressCount':0,
-                    #'NetworkInterfaceId':'',
-                    'PrivateIpAddress':'10.88.88.1/24',
-                    'SecondaryPrivateIpAddressCount':0,
-                    #'SubnetId':SUBNETID,
-                    'AssociateCarrierIpAddress':False,
-                    #'InterfaceType':?,
-                    'NetworkCardIndex':0,
-                    }],
-                #IamInstanceProfile={},
-                EbsOptimized=False
-            )
+        # resource.create_instances(
+        #         BlockDeviceMappings=[{
+        #             'Ebs': {
+        #                 'DeleteOnTermination': True,
+        #                 'Iops': 3000,
+        #                 'VolumeSize': 5,
+        #                 'VolumeType': 'gp3',
+        #                 'Throughput': 125,
+        #                 'Encrypted': False
+        #             },
+        #             'DeviceName': 'xvda',
+        #         }],
+        #         ImageId=IMAGEID,
+        #         InstanceType='t2.micro',
+        #         KeyName=SSHKEY,
+        #         MaxCount=1,
+        #         MinCount=1,
+        #         Monitoring={'Enabled':False},
+        #         #Placement={},
+        #         #RamdiskId='',
+        #         #SecurityGroupIds=[SECGROUPID],
+        #         #SecurityGroups=[],
+        #         #SubnetId='',
+        #         #UserData='',
+        #         #ElasticGpuSpecification=[],
+        #         #ElasticInferenceAccelerators=[],
+        #         TagSpecifications=['ResourceType':'instance', 'Tags':[{'Key':'cisvpn','Value':'delete'}]],
+        #         #LaunchTemplate={},
+        #         #InstanceMarketOptions={},
+        #         CreditSpecification={'CpuCredits':'standard'},
+        #         #CpuOptions={},
+        #         CapacityReservationSpecification={'CapacityReservationPreference':'none'},
+        #         #HibernationOptions={},
+        #         #LicenseSpecifications={},
+        #         #MetadataOptions={},
+        #         #EnclaveOptions={},
+        #         #PrivateDnsNameOptions={},
+        #         #MaintenanceOptions={},
+        #         DisableApiStop=False,
+        #         EnablePrimaryIpv6=False,
+        #         DryRun=False,
+        #         DisableApiTermination=False,
+        #         InstanceInitiatedShutdownBehavior='terminate',
+        #         #PrivateIpAddress=,
+        #         #ClientToken=,
+        #         #AdditionalInfo=,
+        #         NetworkInterfaces=[{
+        #             'AssociatePublicIpAddress': True,
+        #             'DeleteOnTermination':True,
+        #             'Description':'InterfaceDescription',
+        #             'DeviceIndex':0,
+        #             'Groups':[sec_group_id],
+        #             'Ipv6AddressCount':0,
+        #             #'NetworkInterfaceId':'',
+        #             'PrivateIpAddress':'10.88.88.1/24',
+        #             'SecondaryPrivateIpAddressCount':0,
+        #             #'SubnetId':SUBNETID,
+        #             'AssociateCarrierIpAddress':False,
+        #             #'InterfaceType':?,
+        #             'NetworkCardIndex':0,
+        #             }],
+        #         #IamInstanceProfile={},
+        #         EbsOptimized=False
+        #     )
         
 
         quit()
@@ -184,8 +175,21 @@ class AwsInterface(CloudInterface):
         pass
 
     # return -1 on error
-    def init_cloud(self):
-        pass
+    async def test_key(self, api_key):
+        session = boto3.Session(
+            aws_access_key_id=api_key[0],
+            aws_secret_access_key=api_key[1],
+        )
+        client = session.client('ec2', region_name="us-east-1")
+        try:
+            await asyncio.to_thread(client.describe_regions(AllRegions=False, DryRun=True))
+        except be.ClientError as e:
+            if e.response["Error"]["Code"] == "DryRunOperation":
+                return 0
+            else:
+                print(e.response)
+                raise e
+        return -1
 
     def terminate_cloud(self):
         pass

@@ -1,9 +1,9 @@
-from vpn.windows_vpn import Windows_VPN
 import platform
 
 class VPN_Manager():
     def __init__(self):
         if platform.system() == "Windows":
+            from vpn.windows_vpn import Windows_VPN
             self.vpn = Windows_VPN()
         else:
             print("ERROR: Platform ", platform.system(), " not supported")

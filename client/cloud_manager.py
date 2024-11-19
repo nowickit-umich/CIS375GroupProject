@@ -1,25 +1,22 @@
 from cloud.aws_interface import AwsInterface
 
 class Cloud_Manager():
-    def __init__(self, api_key):
-        #Select Cloud_Interface implementation based on API selection TODO
-        self.api_key = self.get_api_key()
-        if self.api_key == []:
-            pass
-            # no key saved
-        self.cloud = AwsInterface()
-        if self.cloud.init_cloud() != 0:
-            print("Error connecting to cloud")
-            return
-        return
-    
-    def get_api_key(self):
-        # store as <cloudType> <public> <private>
+    def __init__(self):
+        pass
+
+    async def setup(self, cloud_name, api_key):
+        #Select Cloud_Interface implementation based on API selection
+        if cloud_name == "AWS":
+            self.cloud = AwsInterface()
+        else:
+            raise ValueError("Cloud not supported")
+
+        self.api_key = api_key
         try:
-            file = open("apikey")
+            await self.cloud.test_key(self.api_key)
         except:
-            return []
-        return file.readline().split()
+            raise ValueError("API key test failed")
+        return
 
     def create_server(self, region):
         self.cloud.create_server(region)
