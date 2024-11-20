@@ -2,7 +2,8 @@
 
 # enable/disable block list
 # add/remove blocklist
-# list/retrieve block lists
-# retreive stats db
+# list block lists
 
-# terminate server after 15 minutes of inactivity 
+# return stats db
+# write dns logs into stats db - continuous
+# 
