@@ -11,10 +11,9 @@ from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.anchorlayout import AnchorLayout
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.uix.dropdown import DropDown
 from kivy.clock import Clock
 from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
@@ -23,7 +22,7 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 
 def call_async(function):
-    # returns a synchronous wrapper function for use with kivy buttons
+    # returns a synchronous wrapper function for use with kivy
     def wrapper(x):
         asyncio.create_task(function(x))
     return wrapper
@@ -33,7 +32,7 @@ class Login_Screen(Screen):
         super().__init__(**kwargs)
         font_size = dp(16)
 
-        # primary elements
+        # Define UI 
         self.cloud_types = ["AWS", "Google Cloud", "Azure"]
         self.input_access = TextInput(
             multiline=False, 
@@ -120,9 +119,7 @@ class Login_Screen(Screen):
         
         self.message.color = (1,1,1,1)
         self.message.text = "Validating Credentials..."
-
-        # Update UI
-        await asyncio.sleep(0)
+        await asyncio.sleep(0) # Update UI
 
         app = App.get_running_app()
         try:
@@ -133,29 +130,23 @@ class Login_Screen(Screen):
             self.message.color = (1, 0.2, 0.2, 1)
             self.message.text = "Error: Invalid Credentials"
             return
-        
-        # DEBUG test credentials
-        print("login")
-        print(x)
-        print(self.input_access.text)
-        print(self.select_cloud.text)
-        print(self.save_cred.active)
 
         # Login Success
         app.login = True
         self.message.color = (1,1,1,1)
         self.message.text = "Login Successful!"
+        await asyncio.sleep(0)
 
         # Save credentials
         if self.save_cred:
             self.save_credentials(cloud_name, access, secret)
-
+        # Switch to main screen
         self.manager.current = 'main'
         return
     
     def save_credentials(self, cloud_name, access, secret):
         try:
-            file = open("credentials.secret", "w")
+            file = open("data/credentials.secret", "w")
         except Exception as e:
             print(e)
             print("Unable to save credentials")
@@ -164,20 +155,24 @@ class Login_Screen(Screen):
         file.write(access + '\n')
         file.write(secret + '\n')
         return
-        
+    
+    # FORMAT: put each value on its own line
+    # CLOUD_NAME
+    # ACCESS KEY
+    # SECRET KEY
     def read_credentials(self):
         try:
-            file = open("credentials.secret", "r")
+            file = open("data/credentials.secret", "r")
         except:
             return
         cloud = file.readline().strip()
         access = file.readline().strip()
         secret = file.readline().strip()
         if not cloud or not access or not secret:
-            os.remove("credentials.secret")
+            os.remove("data/credentials.secret")
             return
         if cloud not in self.cloud_types:
-            os.remove("credentials.secret")
+            os.remove("data/credentials.secret")
             return
         self.input_access.text = access
         self.input_secret.text = secret
@@ -185,12 +180,6 @@ class Login_Screen(Screen):
         return
 
 class VPN_Screen(Screen):
-    def update(self, dt):
-        if self.status.text == "DISCONNECTED":
-            self.status.text = "CONNECTED"
-        else:
-            self.status.text = "DISCONNECTED"
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -198,54 +187,49 @@ class VPN_Screen(Screen):
         self.vpn_manager = App.get_running_app().vpn_manager
         self.cloud_manager = App.get_running_app().cloud_manager
 
-        #connection status test
-        status1 = AnchorLayout(anchor_y='center', anchor_x='right', height=50)
-        self.status = Button(text='DISCONNECTED', size_hint=(None, None))
-        status1.add_widget(self.status)
-        Clock.schedule_interval(self.update, 2)
-        self.add_widget(status1)
-
-        server_status = BoxLayout(orientation="vertical", padding=20, spacing=10)
         # Server Status Display test
-        status_label = Label(text=f"Status: sttttt", font_size=20)
-        server_status.add_widget(status_label)
+        server_status = BoxLayout(orientation="vertical", padding=20, spacing=10)
+        self.status_label = Label(text=f"Status: {self.cloud_manager.server_status}", font_size=20)
+        server_status.add_widget(self.status_label)
 
         # Server Location Selector
-        server_spinner = Spinner(
-            text="location",
-            values=("US-East", "US-West", "Europe", "Asia"),
+        self.server_location_selector = Spinner(
+            text=self.cloud_manager.locations[0],
+            values=self.cloud_manager.locations,
             size_hint=(1, None),
             height=44
         )
-        server_status.add_widget(server_spinner)
+        server_status.add_widget(self.server_location_selector)
 
         # Connect/Disconnect Button
-        connect_button = Button(text="Connect", size_hint=(1, None), height=50)
-        server_status.add_widget(connect_button)
+        self.connect_button = Button(text="Connect", size_hint=(1, None), height=50)
+        server_status.add_widget(self.connect_button)
         self.add_widget(server_status)
+        return
 
-        # connect/disconnect button
-        # label_width = dp(120)
-        # main_widget = BoxLayout(orientation="vertical", size_hint=(0.7, 0.7))
-        # location_widget = BoxLayout(orientation="horizontal")
-        # location_widget.add_widget(Label(text="Sever Location:", size_hint=(None, 1), width=label_width))
-        # location_widget.add_widget(Button(text="sel loc"))
-        # main_widget.add_widget(location_widget)
-        # main_widget.add_widget(Button(text="Connect"))
-        # status_widget = BoxLayout(orientation="horizontal")
-        # status_widget.add_widget(Label(text="Sever Status:", size_hint=(None, 1), width=label_width))
-        # main_widget.add_widget(status_widget)
-        # center = AnchorLayout(anchor_x="center", anchor_y="center")
-        # center.add_widget(main_widget)
-        # self.add_widget(center)
+    def update(self, dt):
+        # Update status
+        self.status_label.text = f"Status: {self.cloud_manager.server_status}"
+        # Update button text
+        if self.cloud_manager.server_status == "Offline":
+            self.connect_button.text = "Start Server"
+        elif self.cloud_manager.server_status == "Online":
+            if self.vpn_manager.is_connected:
+                self.connect_button.text = "Disconnect VPN"
+            else:
+                self.connect_button.text = "Connect VPN"
+        return
 
-        # bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
-        # layout = BoxLayout()
-        # layout.add_widget(Button(text='Connect', on_press=lambda x:self.vpn_manager.connect()))
-        # layout.add_widget(Button(text='Disconnect', on_press=lambda x:self.vpn_manager.disconnect()))
-        # bottom_bar.add_widget(layout)
-        # self.add_widget(bottom_bar)
-
+    def on_pre_enter(self, *args):
+        # Update location selector
+        self.server_location_selector.text = self.cloud_manager.locations[0]
+        self.server_location_selector.values = self.cloud_manager.locations
+        # Add update loop
+        self.event_loop = Clock.schedule_interval(self.update, 1)
+    
+    def on_leave(self, *args):
+        Clock.unschedule(self.event_loop)
+        return
     
 class Filter_Screen(Screen):
     def __init__(self, **kwargs):
@@ -263,24 +247,35 @@ class Main_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        sm = ScreenManager()
-        sm.add_widget(VPN_Screen(name='vpn'))
-        sm.add_widget(Filter_Screen(name='filter'))
-        sm.add_widget(Stats_Screen(name='stat'))
+        # Create Screens
+        self.sm = ScreenManager()
+        self.vpn_screen = VPN_Screen(name='vpn')
+        self.filter_screen = Filter_Screen(name='filter')
+        self.stats_screen = Stats_Screen(name='stat')
+
+        # Add screens to screen manager
+        self.sm.add_widget(self.stats_screen)
+        self.sm.add_widget(self.vpn_screen)
+        self.sm.add_widget(self.filter_screen)
 
         # Create a layout for the menu bar
         menu_bar = BoxLayout(size_hint_y=None, height=50)
-        menu_bar.add_widget(Button(text='VPN', on_press=lambda x:setattr(sm,'current','vpn')))
-        menu_bar.add_widget(Button(text='Filter', on_press=lambda x:setattr(sm,'current','filter')))
-        menu_bar.add_widget(Button(text='Statistics', on_press=lambda x:setattr(sm,'current','stat')))
+        menu_bar.add_widget(Button(text='VPN', on_press=lambda x:setattr(self.sm,'current','vpn')))
+        menu_bar.add_widget(Button(text='Filter', on_press=lambda x:setattr(self.sm,'current','filter')))
+        menu_bar.add_widget(Button(text='Statistics', on_press=lambda x:setattr(self.sm,'current','stat')))
 
+        # Attach menu bar above screen manager
         main_layout = BoxLayout(orientation='vertical')
         main_layout.add_widget(menu_bar)
-        main_layout.add_widget(sm)
+        main_layout.add_widget(self.sm)
         
         self.add_widget(main_layout)
 
-class UI_DEMOApp(App):
+    def on_pre_enter(self, *args):
+        # Trigger on_enter update for vpn screen when main screen is activaated
+        self.sm.current = 'vpn'
+
+class Client_App(App):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -288,16 +283,21 @@ class UI_DEMOApp(App):
         self.vpn_manager = VPN_Manager()
         self.filter_manager = None
         self.stats_manager = None
-        self.login = False
+        # Add manager update loops
+        Clock.schedule_interval(call_async(self.cloud_manager.update), 1)
+        Clock.schedule_interval(call_async(self.vpn_manager.update), 1)
         return
 
     def build(self):
-        root_sm = ScreenManager()
-        # Add screens
-        root_sm.add_widget(Login_Screen(name='login'))
-        root_sm.add_widget(Main_Screen(name='main'))
+        root_sm = ScreenManager(transition=NoTransition())
+        login_screen = Login_Screen(name='login')
+        main_screen = Main_Screen(name='main')
+        # Add root screens
+        root_sm.add_widget(login_screen)
+        root_sm.add_widget(main_screen)
         return root_sm
 
+
 if __name__ == '__main__':
-    asyncio.run(UI_DEMOApp().async_run(async_lib='asyncio'))
+    asyncio.run(Client_App().async_run(async_lib='asyncio'))
 

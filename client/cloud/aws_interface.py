@@ -174,6 +174,28 @@ class AwsInterface(CloudInterface):
         print("\n STOP SERVER \n")
         pass
 
+    async def get_status(self, api_key, server_id, server_location):
+        session = boto3.Session(
+            aws_access_key_id=api_key[0],
+            aws_secret_access_key=api_key[1],
+        )
+        client = session.client('ec2', region_name=server_location)
+        try:
+            response = await asyncio.to_thread(client.describe_instance_status(
+                InstanceIds=[server_id],
+                DryRun=False,
+                IncludeAllInstances=False
+            ))
+        except be.NoRegionError as e:
+            return
+        except be.ClientError as e:
+            print(e.response)
+            raise e
+        except Exception as e:
+            print(e)
+            raise e
+        return
+
     # return -1 on error
     async def test_key(self, api_key):
         session = boto3.Session(
@@ -182,7 +204,7 @@ class AwsInterface(CloudInterface):
         )
         client = session.client('ec2', region_name="us-east-1")
         try:
-            await asyncio.to_thread(client.describe_regions(AllRegions=False, DryRun=True))
+            await asyncio.to_thread(client.describe_regions, AllRegions=False, DryRun=True)
         except be.ClientError as e:
             if e.response["Error"]["Code"] == "DryRunOperation":
                 return 0
@@ -193,3 +215,16 @@ class AwsInterface(CloudInterface):
 
     def terminate_cloud(self):
         pass
+
+    async def get_locations(self, api_key):
+        session = boto3.Session(
+            aws_access_key_id=api_key[0],
+            aws_secret_access_key=api_key[1],
+        )
+        client = session.client('ec2', region_name="us-east-1")
+        try:
+            res = await asyncio.to_thread(client.describe_regions, AllRegions=False, DryRun=False)
+        except be.ClientError as e:
+            print(e.response)
+            raise e
+        return [region['RegionName'] for region in res['Regions']]
