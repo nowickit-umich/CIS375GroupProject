@@ -58,11 +58,10 @@ cp $SPATH/config/charon-systemd.conf /etc/strongswan.d/charon-systemd.conf
 #Certificate Config
 cp $SPATH/templates/cert.template $SPATH/config/cert.conf
 sed -i -e "s/%IP%/$IP/g" $SPATH/config/cert.conf
-openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -sha256 -days 3650 -nodes -config $SPATH/config/cert.conf
+openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -sha256 -days 1 -nodes -config $SPATH/config/cert.conf
 mv $SPATH/key.pem /etc/swanctl/private/key.pem
 mv $SPATH/cert.pem /etc/swanctl/x509/cert.pem
 
 #Start VPN
 systemctl restart strongswan
 systemctl enable strongswan
-
