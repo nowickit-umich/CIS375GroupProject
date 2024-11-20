@@ -1,9 +1,8 @@
 interface=%SERVER_INTERFACE%
 server=1.1.1.1
 log-queries=extra
-log-facility=/var/log/dns.log
+log-facility=/var/log/dns
 log-async=25
-cache-size=0
 no-resolv
 domain-needed
 bogus-priv
