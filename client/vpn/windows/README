@@ -1,0 +1,11 @@
+Commands to build with CMake:
+
+First:
+install CMake
+cd into build directory
+ - mkdir build
+ - cd build
+
+Next run:
+1. cmake ..
+2. cmake --build . --config Release
