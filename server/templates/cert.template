@@ -14,4 +14,4 @@ authorityKeyIdentifier = keyid,issuer
 [ dn ]
 C = US
 CN = %IP%
-O = EasyVPN
+O = CIS375VPN

@@ -4,7 +4,7 @@ mycert {
 }
 
 connections {
-        c2vpn {
+        cis375vpn {
                 version=2
                 local_addrs=%any
                 remote_addrs=%any

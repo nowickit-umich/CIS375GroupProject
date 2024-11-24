@@ -41,10 +41,8 @@ cp $SPATH/config/nftables.conf /etc/nftables.conf
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 120"`
 IP=`curl http://169.254.169.254/latest/meta-data/public-ipv4 -H "X-aws-ec2-metadata-token: $TOKEN"`
 
-#Get user input to set password
-echo "###################"
-echo ""
-read -p "Set VPN password: " password
+# Generate password
+password = $(openssl rand -base64 21)
 
 #Configure VPN
 cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf
@@ -61,6 +59,12 @@ sed -i -e "s/%IP%/$IP/g" $SPATH/config/cert.conf
 openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -sha256 -days 1 -nodes -config $SPATH/config/cert.conf
 mv $SPATH/key.pem /etc/swanctl/private/key.pem
 mv $SPATH/cert.pem /etc/swanctl/x509/cert.pem
+
+# start server_cmd service
+cp $SPATH/systemd/server_cmd.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl start server_cmd
+systemctl enable server_cmd
 
 #Start VPN
 systemctl restart strongswan

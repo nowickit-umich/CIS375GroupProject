@@ -23,12 +23,16 @@ class CloudInterface(ABC):
 
     #setup cloud enviornment
     @abstractmethod
-    def init_cloud():
+    def test_key(self, api_key):
         pass
 
     #Remove all resources from the cloud service
     @abstractmethod
     def terminate_cloud():
+        pass
+
+    @abstractmethod
+    def get_locations(self, api_key):
         pass
 
 
