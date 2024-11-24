@@ -15,19 +15,16 @@ from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.clock import Clock
-from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 
-def call_async(function):
-    # returns a synchronous wrapper function for use with kivy
-    def wrapper(x):
-        asyncio.create_task(function(x))
-    return wrapper
+from kivy.logger import Logger
+Logger.setLevel('DEBUG')
 
 class Login_Screen(Screen):
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         font_size = dp(16)
@@ -53,7 +50,7 @@ class Login_Screen(Screen):
         )
         self.message = Label(text="", size_hint=(1, 0.1))
         self.save_cred = CheckBox(size_hint=(None, None), size=(dp(20), dp(20)))
-        login_button = Button(text='Login', size_hint=(1, 0.1), on_press=call_async(self.login))
+        login_button = Button(text='Login', size_hint=(1, 0.1), on_press=self.login)
 
         # Cloud selection drop down menu
         self.select_cloud = Spinner(
@@ -104,11 +101,7 @@ class Login_Screen(Screen):
         # Check for saved credentials
         self.read_credentials()    
     
-    async def login(self, x):
-        # DEBUG LOGIN BYPASS
-        #self.manager.current = 'main'
-        #return
-
+    def login(self, x):
         access = self.input_access.text
         secret = self.input_secret.text
         cloud_name = self.select_cloud.text
@@ -116,50 +109,56 @@ class Login_Screen(Screen):
             self.message.color = (1, 0.2, 0.2, 1)
             self.message.text = "Error: Invalid Credentials"
             return
+        credentials = [cloud_name, access, secret]
         
+        # Check credentials
         self.message.color = (1,1,1,1)
         self.message.text = "Validating Credentials..."
-        await asyncio.sleep(0) # Update UI
-
-        app = App.get_running_app()
-        try:
-            await app.cloud_manager.setup(cloud_name, [access, secret])
-        except Exception as e:
-            # TODO error handling
-            print(e)
-            self.message.color = (1, 0.2, 0.2, 1)
-            self.message.text = "Error: Invalid Credentials"
-            return
-
-        # Login Success
-        app.login = True
-        self.message.color = (1,1,1,1)
-        self.message.text = "Login Successful!"
-        await asyncio.sleep(0)
-
-        # Save credentials
-        if self.save_cred:
-            self.save_credentials(cloud_name, access, secret)
-        # Switch to main screen
-        self.manager.current = 'main'
+        asyncio.create_task(self._check_credentials(credentials))
         return
     
-    def save_credentials(self, cloud_name, access, secret):
+    async def _check_credentials(self, credentials):
+        app = App.get_running_app()
+        is_valid = False
+        try:
+            await asyncio.to_thread(app.cloud_manager.setup, credentials) 
+            is_valid = True
+        except ValueError as e:
+            pass
+        except Exception as e:
+            # TODO error handling            
+            is_valid = False
+        # update status
+        Clock.schedule_once(lambda x: self.update_status(is_valid, credentials))
+        return
+        
+    def update_status(self, is_valid, credentials):
+        if is_valid:
+            # Login Success
+            self.message.color = (1,1,1,1)
+            self.message.text = "Login Successful!"
+
+            # Save credentials
+            if self.save_cred:
+                self.save_credentials(credentials)
+            # Switch to main screen
+            self.manager.current = 'main'
+        else:
+            self.message.color = (1, 0.2, 0.2, 1)
+            self.message.text = "Error: Invalid Credentials"
+    
+    def save_credentials(self, credentials):
         try:
             file = open("data/credentials.secret", "w")
         except Exception as e:
             print(e)
             print("Unable to save credentials")
             return
-        file.write(cloud_name + '\n')
-        file.write(access + '\n')
-        file.write(secret + '\n')
+        file.write(credentials[0] + '\n')
+        file.write(credentials[1] + '\n')
+        file.write(credentials[2] + '\n')
         return
     
-    # FORMAT: put each value on its own line
-    # CLOUD_NAME
-    # ACCESS KEY
-    # SECRET KEY
     def read_credentials(self):
         try:
             file = open("data/credentials.secret", "r")
@@ -196,29 +195,48 @@ class VPN_Screen(Screen):
         self.server_location_selector = Spinner(
             text=self.cloud_manager.locations[0],
             values=self.cloud_manager.locations,
+            disabled=False,
             size_hint=(1, None),
             height=44
         )
+        self.server_location_selector.bind(text=self.on_location_select)
         server_status.add_widget(self.server_location_selector)
 
         # Connect/Disconnect Button
-        self.connect_button = Button(text="Connect", size_hint=(1, None), height=50)
+        self.connect_button = Button(text="Initializing...", size_hint=(1, None), height=50)
         server_status.add_widget(self.connect_button)
         self.add_widget(server_status)
         return
+    
+    def on_location_select(self, instance, text=None):
+        self.cloud_manager.server_location = self.server_location_selector.text
 
+    # reads status to UI
     def update(self, dt):
+        #TODO I think there is a better way to do this
+        if self.cloud_manager.is_ready and not self.cloud_manager.is_monitored:
+            asyncio.create_task(self.cloud_manager.monitor_server())
+
         # Update status
         self.status_label.text = f"Status: {self.cloud_manager.server_status}"
         # Update button text
         if self.cloud_manager.server_status == "Offline":
             self.connect_button.text = "Start Server"
-        elif self.cloud_manager.server_status == "Online":
+            self.connect_button.on_press = lambda: asyncio.create_task(self.on_create_server())
+        elif self.cloud_manager.server_status == "ok":
             if self.vpn_manager.is_connected:
                 self.connect_button.text = "Disconnect VPN"
+                self.connect_button.on_press = self.vpn_manager.disconnect
             else:
                 self.connect_button.text = "Connect VPN"
+                self.connect_button.on_press = self.vpn_manager.connect
         return
+    
+    async def on_create_server(self):
+        try:
+            await asyncio.to_thread(self.cloud_manager.create_server)
+        except Exception as e:
+            Logger.error("Create server error:", e)        
 
     def on_pre_enter(self, *args):
         # Update location selector
@@ -226,9 +244,11 @@ class VPN_Screen(Screen):
         self.server_location_selector.values = self.cloud_manager.locations
         # Add update loop
         self.event_loop = Clock.schedule_interval(self.update, 1)
-    
+        # start monitoring status of vpn and cloud
+           
     def on_leave(self, *args):
         Clock.unschedule(self.event_loop)
+        self.cloud_manager.is_ready = False
         return
     
 class Filter_Screen(Screen):
@@ -283,9 +303,6 @@ class Client_App(App):
         self.vpn_manager = VPN_Manager()
         self.filter_manager = None
         self.stats_manager = None
-        # Add manager update loops
-        Clock.schedule_interval(call_async(self.cloud_manager.update), 1)
-        Clock.schedule_interval(call_async(self.vpn_manager.update), 1)
         return
 
     def build(self):
