@@ -1,5 +1,5 @@
 from vpn.vpn_interface import VPN_Interface
-
+import subprocess
 import ctypes
 lib = ctypes.WinDLL("vpn/windows/windows_vpn.dll")
 lib.create_profile.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
@@ -16,6 +16,11 @@ lib.debug.restype = ctypes.c_int
 class Windows_VPN(VPN_Interface):
     def __init__(self):
         pass
+
+    def install_cert(self, path):
+        cmd = f'\'-Command Import-Certificate -FilePath \"{path}\" -CertStoreLocation Cert:\LocalMachine\Root\''
+        admin_cmd = f'Powershell -Command Start-Process -Verb RunAs -WindowStyle Hidden -FilePath \"PowerShell.exe\" -ArgumentList {cmd}'
+        subprocess.run(admin_cmd, creationflags=subprocess.CREATE_NO_WINDOW, shell=True)
 
     def create_profile(self, profile_name, server_address, pbk_path):
         ret = lib.create_profile(ctypes.c_char_p(profile_name.encode('utf-8')), 
