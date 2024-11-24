@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
 import asyncio

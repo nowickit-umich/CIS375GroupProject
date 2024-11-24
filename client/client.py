@@ -212,7 +212,7 @@ class VPN_Screen(Screen):
         self.cloud_manager.server_location = self.server_location_selector.text
 
     # reads status to UI
-    def update(self, dt):
+    def update(self, dt=0):
         #TODO I think there is a better way to do this
         if self.cloud_manager.is_ready and not self.cloud_manager.is_monitored:
             asyncio.create_task(self.cloud_manager.monitor_server())
@@ -221,18 +221,27 @@ class VPN_Screen(Screen):
         self.status_label.text = f"Status: {self.cloud_manager.server_status}"
         # Update button text
         if self.cloud_manager.server_status == "Offline":
+            App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
+            App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
+            self.connect_button.disabled = False
             self.connect_button.text = "Start Server"
             self.connect_button.on_press = lambda: asyncio.create_task(self.on_create_server())
+        if self.cloud_manager.server_status == "initializing":
+            self.connect_button.disabled = True
         elif self.cloud_manager.server_status == "ok":
             if self.vpn_manager.is_connected:
+                self.connect_button.disabled = False
                 self.connect_button.text = "Disconnect VPN"
                 self.connect_button.on_press = self.vpn_manager.disconnect
             else:
+                self.connect_button.disabled = False
                 self.connect_button.text = "Connect VPN"
                 self.connect_button.on_press = self.vpn_manager.connect
         return
     
     async def on_create_server(self):
+        self.connect_button.disabled = True
+        self.server_location_selector.disabled = True
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
         except Exception as e:
@@ -243,6 +252,7 @@ class VPN_Screen(Screen):
         self.server_location_selector.text = self.cloud_manager.locations[0]
         self.server_location_selector.values = self.cloud_manager.locations
         # Add update loop
+        self.update()
         self.event_loop = Clock.schedule_interval(self.update, 1)
         # start monitoring status of vpn and cloud
            
@@ -280,9 +290,12 @@ class Main_Screen(Screen):
 
         # Create a layout for the menu bar
         menu_bar = BoxLayout(size_hint_y=None, height=50)
-        menu_bar.add_widget(Button(text='VPN', on_press=lambda x:setattr(self.sm,'current','vpn')))
-        menu_bar.add_widget(Button(text='Filter', on_press=lambda x:setattr(self.sm,'current','filter')))
-        menu_bar.add_widget(Button(text='Statistics', on_press=lambda x:setattr(self.sm,'current','stat')))
+        self.vpn_button = Button(text='VPN', on_press=lambda x:setattr(self.sm,'current','vpn'))
+        self.filter_button = Button(text='Filter', on_press=lambda x:setattr(self.sm,'current','filter'))
+        self.stats_button = Button(text='Statistics', on_press=lambda x:setattr(self.sm,'current','stat'))
+        menu_bar.add_widget(self.vpn_button)
+        menu_bar.add_widget(self.filter_button)
+        menu_bar.add_widget(self.stats_button)
 
         # Attach menu bar above screen manager
         main_layout = BoxLayout(orientation='vertical')
@@ -306,13 +319,13 @@ class Client_App(App):
         return
 
     def build(self):
-        root_sm = ScreenManager(transition=NoTransition())
+        self.root_sm = ScreenManager(transition=NoTransition())
         login_screen = Login_Screen(name='login')
         main_screen = Main_Screen(name='main')
         # Add root screens
-        root_sm.add_widget(login_screen)
-        root_sm.add_widget(main_screen)
-        return root_sm
+        self.root_sm.add_widget(login_screen)
+        self.root_sm.add_widget(main_screen)
+        return self.root_sm
 
 
 if __name__ == '__main__':

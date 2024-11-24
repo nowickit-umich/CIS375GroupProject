@@ -164,6 +164,7 @@ class AwsInterface(CloudInterface):
             MaxCount=1,
             MinCount=1,
             SecurityGroupIds=[self.security_group_id],
+            InstanceInitiatedShutdownBehavior='terminate',
             TagSpecifications=[{
                 'ResourceType': 'instance',
                 'Tags': [{'Key':ID_KEY, 'Value':ID_VALUE}]
