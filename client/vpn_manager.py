@@ -25,7 +25,7 @@ class VPN_Manager():
         ssh.connect(hostname=server_ip, username="ubuntu", pkey=key)
         sftp = ssh.open_sftp()
         sftp.get("/etc/swanctl/x509/cert.pem", "data/cert.pem")
-        sftp.get("/home/ubuntu/vpn.secret", "data/vpnkey.secret")
+        sftp.get("/home/ubuntu/vpnkey.secret", "data/vpnkey.secret")
         sftp.close()
         ssh.close()
         return

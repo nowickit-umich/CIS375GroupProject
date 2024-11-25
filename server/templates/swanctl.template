@@ -9,7 +9,7 @@ connections {
                 local_addrs=%any
                 remote_addrs=%any
                 #TODO find better props
-                proposals=aes256gcm16-prfsha256-sha256-modp1024-modp2048
+                proposals=aes256-prfsha256-sha256-modp1024-modp2048
                 encap=yes
                 dpd_delay=10
                 pools=virt
