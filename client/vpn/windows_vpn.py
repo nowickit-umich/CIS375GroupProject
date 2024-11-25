@@ -37,7 +37,7 @@ class Windows_VPN(VPN_Interface):
             self.debug(0, "Certificate Installed Successfully")
 
         except Exception as e:
-            self.debug(-1, f"Error: {e}")
+            self.debug(-1, f"Error installing certificate: {e}")
             raise
 
     def create_profile(self, profile_name, server_address, pbk_path): # Create profile given name, server address, and pbk path
