@@ -65,6 +65,6 @@ class VPN_Manager():
         self.is_ready = True
         return
     
-    async def disconnect(self):
-        await self.vpn.disconnect(self.profile_name)
+    def disconnect(self):
+        self.vpn.disconnect(self.profile_name)
         return
