@@ -1,326 +1,480 @@
+# i still need to import the main branch to add some of the other ui details
+#filter should work the same, let me know if there is some issue
+#i messed around with this branch a bit so some of the other features might not work correctly in other screens
 
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
 from statistics_manager import Stats_Manager
 from filter_manager import Filter_Manager
 
-#UI Imports
-import kivy
+import os
+import asyncio
+
+# UI Imports
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.anchorlayout import AnchorLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.vector import Vector
 from kivy.clock import Clock
-from kivy.uix.image import AsyncImage
-from kivy.graphics import Color, Rectangle
-from kivy.core.window import Window
-from kivy.lang import Builder
 from kivy.uix.popup import Popup
-import time
-from kivy.properties import StringProperty
-from kivy.uix.popup import Popup
-from kivy.factory import Factory
-from kivy.uix.gridlayout import GridLayout
-from kivy.config import Config
 from kivy.uix.textinput import TextInput
+from kivy.metrics import dp
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.spinner import Spinner
+from kivy.lang import Builder
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
+from kivy.core.window import Window
+from kivy.uix.scrollview import ScrollView
 
 
-#Config.set('graphics', 'resizable', True)
+from kivy.logger import Logger
+Logger.setLevel('DEBUG')
 
-
-#This sets background color, has no impact unless the background image is commented out or removed
-#Window.clearcolor = (1,1,1)
-
-#Change window size on startup, may have to change later.
-Window.size = (1200,750)
-
+#removed the background image to prevent issues of multiple images loading at one time,
+#will implement background image on each different tab,
 """
-serverexists = True #global variable to determine if a server exists, if true, a server does exist, if false, a server does not exist,
-#dont let user create more than 1 server
-class UserServer:
-    def __init__(self, servname):
-        self.servname = servname
-        #let user change server name, could add more attributes to class to let user customize server more
-"""
-#Background image
 Builder.load_string('''
-<BoxLayout>
+<BoxLayout>  
     canvas.before:
         BorderImage:
-            #BorderImage behaves like the CSS BorderImage
-            border: 10, 10, 10, 10
-            source: 'images/Earth2.png' #can change this image as we want, will need to change source when changing program location
+            source: 'images/Earth2.png'
             pos: self.pos
-            size: self.size          
-            ''')
-
-class LoginScreen(Screen):
-    def __init__(self, **kwargs):
-        super(LoginScreen, self). __init__(**kwargs)
-
-        self.title = 'Login'
-        self.size = (.5,.5)
-
-        layout = GridLayout(cols = 2, spacing = 10, padding = 10)
-
-
-
-        layout.add_widget(Label(text = 'Enter Access Key:'))
-        self.accesskey = TextInput(multiline = False)
-        self.add_widget(self.accesskey)
-
-        layout.add_widget(Label(text = 'Enter Secret Access Key:', size_hint = (1,None), height = 100))
-        #servername = TextInput(multiline=False, size_hint = (1,None), height = 100)
-
-        self.secretkey = TextInput(multiline = False)
-        self.add_widget(self.secretkey)
-
-        self.submit = Button(text = "Validate Keys")
-        self.submit.bind(on_press = self.validate)
-        layout.add_widget(self.submit)
-
-        self.content = layout
-
-    def validate(self,instance):
-
-        #chatgpt example login, will change to read from a file on computer, with accesskey and secretkey stored on it
-
-        accesskey = self.accesskey.text
-        secretkey = self.secretkey.text
-
-
-
-        if self.accesskey.text == "a" and self.secretkey.text == "b":  # Example validation
-            #will call cloudmanager to read api key from file on local device?
-            self.manager.current = "vpn"  # Switch to main screen
-        else:
-            print("Invalid key")
-
-
-
-
-class vpnScreen(Screen):
-    def __init__(self, vpn_manager, **kwargs):
-        super(vpnScreen, self).__init__(**kwargs)
-
-        self.vpn_manager = vpn_manager
-
-
-        #building clock feature
-        self.timerunning = 0 #set timer to 0
-        self.clockstatus = False #determine if clock is running, true means it is
-        self.time_label = Label(text = "00:00:00", font_size = 25, pos = (160, -40), color = (0,0,0), bold = True)
-        self.statuslabel = Label(text = "Disconnected" , font_size = 50, color = (20,0,0), pos = (0,10), bold = True)
-
-        bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
-        layout = BoxLayout()
-
-        #check color on kivy.org
-        layout.add_widget(Button(text='Connect', background_color=(0, 0, 20), on_press = self.startclock)) #start clock
-
-
-
-        layout.add_widget(Button(text='Disconnect', background_color=(20, 0, 0) , on_press = self.stopclock)) #stop clock
-
-
-
-        Clock.schedule_interval(self.updateclock, 1)
-        Clock.schedule_interval(self.updatestatus, .02)
-
-        bottom_bar.add_widget(layout)
-        self.add_widget(bottom_bar)
-        # self.add_widget(Label(text='This is the VPN Connection Screen'))
-
-        # can add a font style in project folder to change display font
-        self.add_widget(Label(text='Status: ', color=(0, 0, 0), font_size=50, pos=(0,60), bold=True))
-
-
-        self.add_widget(self.statuslabel)
-
-
-        self.add_widget(Label(text='Time Connected -', color=(0, 0, 0), font_size = 25, pos = (0,-40), bold = True))
-
-
-        self.add_widget(self.time_label)
-
-        self.add_widget(Label(text='IP Address - ', color=(0, 0, 0), font_size = 25, pos = (0,-80), bold = True)) #create function to read ip address
-
-        self.add_widget(Label(text='Ping ms ', color=(0, 0, 0), font_size = 25, pos = (0,-120), bold = True)) #create function to read ping
-
-    def startclock(self, instance):
-        self.vpn_manager.connect() #call from vpn_manager instead of directly from windows_vpn
-        #do this to make it easier to add functionality for other operating system
-        #could create another file called mac_vpn.py
-        self.timerunning = time.time()
-        self.clockstatus = True
-
-    def stopclock(self, instance):
-        self.vpn_manager.disconnect()
-        self.clockstatus = False
-        self.time_label.text = "00:00:00"
-
-    def updateclock(self, dt):
-        if self.clockstatus:
-            timespent = int(time.time() - self.timerunning) #might be time.time() - self.timer_start_time
-
-            hours, remainder = divmod(timespent, 3600)
-            mins, seconds = divmod(remainder, 60)
-            self.time_label.text = f"{hours:02}:{mins:02}:{seconds:02}"
-
-    def updatestatus(self, dt):
-        if self.clockstatus:
-            self.statuslabel.text = "Connected"
-            self.statuslabel.color = (0,20,0)
-        else:
-            self.statuslabel.text = "Disconnected"
-            self.statuslabel.color = (20, 0, 0)
-
-class filterScreen(Screen):
-    def __init__(self, **kwargs):
-        super(filterScreen, self).__init__(**kwargs)
-        self.add_widget(Label(text='This is the Filter configuration Screen', color=(0, 0, 0)))
-
-
-class statScreen(Screen):
-    def __init__(self, **kwargs):
-        super(statScreen, self).__init__(**kwargs)
-        self.add_widget(Label(text='This is the Statistics Screen', color=(0, 0, 0)))
-
-
-class serverScreen(Screen):
-    def __init__(self, **kwargs):
-
-
-        super(serverScreen, self).__init__(**kwargs)
-        self.add_widget(Label(text='This is the Server Management Screen', color=(0, 0, 0)))
-
-        bottom_bar = AnchorLayout(anchor_y='bottom', size_hint_y=None, height=50)
-        layout = BoxLayout()
-        layout.add_widget(Button(text='Start Server'))
-        layout.add_widget(Button(text='Stop Server'))
-
-        create_popup = (Button(text='Create Server'))
-        #create_popup.bind(on_release=self.createserver_popup)
-        layout.add_widget(create_popup)
-
-        layout.add_widget(Button(text='Delete Server'))
-
-        bottom_bar.add_widget(layout)
-        self.add_widget(bottom_bar)
-
-    """
-    def createserver_popup(self, instance):
-        layout = BoxLayout(orientation = 'vertical')
-        #use grid layout instead?
-
-        layout.add_widget(Label(text = 'Enter Name for Server:', pos = (0,-40)))
-        #change position
-
-        #layout.add_widget(Label(text = 'Create Server Here, allow user to enter name to create server'))
-
-        #popup = Popup(title = 'test', auto_dismiss = True)
-
-        servername = TextInput(multiline=False, size_hint = (1,None), height = 100)
-        layout.add_widget(servername)
-
-        UserServer(servername)
-
-        close_button = Button(text = 'Create Server', size_hint_y= None, height = 40)
-        close_button.bind(on_release = lambda x: self.createserverobject(servername.text, popup))
-
-
-        #user has a popup that asks them to enter a server name to create a server
-        #user can only have 1 server at a time
-        #delete function clears the name of the server
-
-        layout.add_widget(close_button)
-
-        #popup = Popup(title = 'test', content = layout, size_hint = (.75, .75), auto_dismiss = True, background = None)
-
-        popup = Popup(title = 'Create A Server',
-                      content = layout,
-                      size_hint = (.75, .75),
-                      auto_dismiss = True,
-                      background_color = (1,1,1,1)
-                      )
-        #could remove title or make it empty to not have a title in pop up
-
-        #figure out how to get rid of blue tint in background
-
-        popup.open()
-
-
-    def createserverobject(self, servername, popup):
-        #doesn't check if name is empty or any test cases
-
-        global serverexists
-        serverexists = True
-        new_server = UserServer(servername)
-        print(f"Server created: {new_server.servname}")  # Confirm server creation in the console
-        popup.dismiss()
-
-    def deleteserverobject(self, servername, popup):
-
-        global serverexists
-        serverexists = False
-        del UserServer #should remove userserver class
+            size: self.size
+''')
 """
-class UI_DEMOApp(App):
-    def build(self):
 
-        #create a login page
+#add this to match the image color, so the screen tabs dont have a black background
+Window.clearcolor = (1,1,1)
 
-        sm = ScreenManager()
+Window.size = (1300,750)
 
-        # Add screens
-        vpn_manager = VPN_Manager()
-        cloud_manager = Cloud_Manager()
-        filter_manager = Filter_Manager()
-        stats_manager = Stats_Manager()
+#Window.fullscreen = True
 
-        login_screen = LoginScreen(name = 'login')
-        sm.add_widget(login_screen)
 
-        sm.add_widget(vpnScreen(vpn_manager, name='vpn'))
-        sm.add_widget(filterScreen(name='filters'))
-        sm.add_widget(statScreen(name='stat'))
-        sm.add_widget(serverScreen(name='server'))
 
-        sm.current = 'login'
+def call_async(function):
+    # returns a synchronous wrapper function for use with kivy
+    def wrapper(x):
+        asyncio.create_task(function(x))
+
+    return wrapper
+
+
+class Login_Screen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
+        self.add_widget(self.layout)
+
+
+
+        font_size = dp(16)
+
+        # Define UI
+        self.cloud_types = ["AWS", "Google Cloud", "Azure"]
+        self.input_access = TextInput(
+            multiline=False,
+            padding=(font_size / 2, font_size / 2, font_size / 2, 0),
+            write_tab=False,
+            font_size=font_size,
+            size_hint_y=None,
+            height=font_size + dp(20)
+        )
+        self.input_secret = TextInput(
+            multiline=False,
+            padding=(font_size / 2, font_size / 2, font_size / 2, 0),
+            write_tab=False,
+            font_size=font_size,
+            size_hint_y=None,
+            height=font_size + dp(20),
+            password=True
+        )
+        self.message = Label(text="", size_hint=(1, 0.1))
+        self.save_cred = CheckBox(color = (0,0,0), size_hint=(None, None), size=(dp(20), dp(20)))
+        login_button = Button(text='Login', size_hint=(1, 0.1), on_press=call_async(self.login))
+
+        # Cloud selection drop down menu
+        self.select_cloud = Spinner(
+            text=self.cloud_types[0],
+            values=self.cloud_types,
+            size_hint=(1, None),
+            height=dp(30)
+        )
+
+        label_width = dp(120)
+
+        # Credential entry layout
+        login_entry = GridLayout(cols=2, rows=4, spacing=10, size_hint=(0.9, 0.8))
+        login_entry.add_widget(Label(
+            text="Cloud Platform:", size_hint=(None, None), height=dp(30), color = (0,0,0),
+            width=label_width, halign="right", valign='middle', text_size=(label_width, None)
+        ))
+        login_entry.add_widget(self.select_cloud)
+        login_entry.add_widget(Label(
+            text="Access Token:", size_hint=(None, None), height=font_size + dp(20), color = (0,0,0),
+            width=label_width, halign="right", valign='middle', text_size=(label_width, None)
+        ))
+        login_entry.add_widget(self.input_access)
+        login_entry.add_widget(Label(
+            text="Secret Token:", size_hint=(None, None), height=font_size + dp(20), color = (0,0,0),
+            width=label_width, halign="right", valign='middle', text_size=(label_width, None)
+        ))
+        login_entry.add_widget(self.input_secret)
+        login_entry.add_widget(Label(
+            text="Save Credentials:", size_hint=(None, None), height=dp(20), color = (0,0,0),
+            width=label_width, halign="right", valign='middle', text_size=(label_width, None)
+        ))
+        login_entry.add_widget(self.save_cred)
+
+        # Login box layout
+        login_box = BoxLayout(orientation="vertical", size_hint=(1, None), height=dp(120), spacing=dp(5))
+        login_box.add_widget(self.message)
+        login_box.add_widget(login_button)
+
+        # Anchor widgets into place
+        center = AnchorLayout(anchor_x="center", anchor_y="center")
+        center.add_widget(login_entry)
+        self.add_widget(center)
+
+        self.layout.add_widget(login_box)
+
+        """
+        bottom = AnchorLayout(anchor_x="center", anchor_y="bottom")
+        bottom.add_widget(login_box)
+        self.add_widget(bottom)"""
+
+        # Check for saved credentials
+        self.read_credentials()
+
+    async def login(self, x):
+        # DEBUG LOGIN BYPASS
+        # self.manager.current = 'main'
+        # return
+
+        access = self.input_access.text
+        secret = self.input_secret.text
+        cloud_name = self.select_cloud.text
+        if access == "" or secret == "":
+            #self.message.color = (1, 0.2, 0.2, 1)
+            self.message.text = "Error: Invalid Credentials"
+            return
+
+        #self.message.color = (1, 1, 1, 1)
+        self.message.color = (0,0,0)
+        self.message.text = "Validating Credentials..."
+        await asyncio.sleep(0)  # Update UI
+
+        app = App.get_running_app()
+        try:
+            await app.cloud_manager.setup(cloud_name, [access, secret])
+        except Exception as e:
+            # TODO error handling
+            print(e)
+            self.message.color = (1, 0.2, 0.2, 1)
+            self.message.text = "Error: Invalid Credentials"
+            return
+
+        # Login Success
+        app.login = True
+        self.message.color = (1, 1, 1, 1)
+        self.message.text = "Login Successful!"
+        await asyncio.sleep(0)
+
+        # Save credentials
+        if self.save_cred:
+            self.save_credentials(cloud_name, access, secret)
+        # Switch to main screen
+        self.manager.current = 'main'
+        return
+
+    def save_credentials(self, cloud_name, access, secret):
+        try:
+            file = open("data/credentials.secret", "w")
+        except Exception as e:
+            print(e)
+            print("Unable to save credentials")
+            return
+        file.write(cloud_name + '\n')
+        file.write(access + '\n')
+        file.write(secret + '\n')
+        return
+
+    # FORMAT: put each value on its own line
+    # CLOUD_NAME
+    # ACCESS KEY
+    # SECRET KEY
+    def read_credentials(self):
+        try:
+            file = open("data/credentials.secret", "r")
+        except:
+            return
+        cloud = file.readline().strip()
+        access = file.readline().strip()
+        secret = file.readline().strip()
+        if not cloud or not access or not secret:
+            os.remove("data/credentials.secret")
+            return
+        if cloud not in self.cloud_types:
+            os.remove("data/credentials.secret")
+            return
+        self.input_access.text = access
+        self.input_secret.text = secret
+        self.save_cred.active = True
+        return
+
+
+class VPN_Screen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        layout = FloatLayout()
+
+        background_image = Image(source="images/Earth2.png", allow_stretch=True, keep_ratio=False,
+                                 size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
+        layout.add_widget(background_image)
+
+        # get references to necessary managers
+        self.vpn_manager = App.get_running_app().vpn_manager
+        self.cloud_manager = App.get_running_app().cloud_manager
+
+        # Server Status Display test
+        server_status = BoxLayout(orientation="vertical", padding=20, spacing=10,
+                                  size_hint=(0.8, 0.8), pos_hint={"center_x": 0.5, "center_y": 0.5})
+
+
+
+        self.time_connected_label = Label(
+            text='Time Connected -',
+            color=(0, 0, 0),
+            font_size=25,
+            bold=True
+        )
+
+        server_status.add_widget(self.time_connected_label)  # Add above server location selector
+
+
+
+        self.status_label = Label(text=f"Status: {self.cloud_manager.server_status}", font_size=20, color = (0,0,0), bold = True)
+        server_status.add_widget(self.status_label)
+
+        # Server Location Selector
+        self.server_location_selector = Spinner(
+            text=self.cloud_manager.locations[0],
+            values=self.cloud_manager.locations,
+            size_hint=(1, None),
+            height=44
+        )
+        server_status.add_widget(self.server_location_selector)
+
+
+
+
+
+        # Connect/Disconnect Button
+
+        self.server_active = False #When true, server is active, when false server is inactive
+        #when inactive the bottom button on vpn tab will say start server
+        #when true the button will display connect/disconnect
+        self.is_connected = False #when false, display connect button, when true display disconnect button
+
+
+        self.connect_button = Button(text="Start Server", size_hint=(1, None), height=50, color = (0,0,0), on_press = self.changestatus)
+        server_status.add_widget(self.connect_button)
+
+        #self.add_widget(server_status)
+
+        #return
+
+        layout.add_widget(server_status)
+
+        self.add_widget(layout)
+
+    def update(self, dt):
+        # Update status
+        self.status_label.text = f"Status: {self.cloud_manager.server_status}"
+        # Update button text
+        if self.cloud_manager.server_status == "Offline":
+            self.connect_button.text = "Start Server"
+
+            #self.cloud_manager.start_server()
+        elif self.cloud_manager.server_status == "Online":
+            if self.vpn_manager.is_connected:
+                self.connect_button.text = "Disconnect VPN"
+            else:
+                self.connect_button.text = "Connect VPN"
+        return
+
+    def changestatus(self, dt):
+        #self.status_label.text = f"Status: {self.cloud_manager.server_status}"
+        if not self.server_active: #if server is not active
+            # First press action: Start server
+            #self.cloud_manager.server_status == "Online"
+            #need to make the above line work so the update function will work correctly to change text from start server to connect vpn
+            #right now it will detect the server is activated and change the text to connect vpn but the text quickly returns to start server
+
+            #self.cloud_manager.create_server()
+
+            self.cloud_manager.start_server()
+            self.server_active = True
+            self.connect_button.text = "Connect VPN"
+            #print(self.cloud_manager.server_status) #prints offline
+        elif not self.is_connected: #if server is active and vpn is not connected
+            # Second press action: Connect VPN
+            self.vpn_manager.connect()
+            self.is_connected = True
+        else: #if server is active and vpn is connected
+            # Third press action: Disconnect VPN
+            self.vpn_manager.disconnect()
+            self.is_connected = False
+
+
+    def on_pre_enter(self, *args):
+        # Update location selector
+        self.server_location_selector.text = self.cloud_manager.locations[0]
+        self.server_location_selector.values = self.cloud_manager.locations
+        # Add update loop
+        self.event_loop = Clock.schedule_interval(self.update, 1)
+
+    def on_leave(self, *args):
+        Clock.unschedule(self.event_loop)
+        return
+
+
+class Filter_Screen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        layout = FloatLayout()
+        #self.add_widget(CheckBox(color = (0,0,0), size_hint=(None, None), size=(dp(20), dp(20))))
+
+        #read from a file to create a few filters and checkboxes
+
+        # get list of file from server, file contain list of names
+
+        background_image = Image(source="images/Earth2.png", allow_stretch=True, keep_ratio=False,
+                                 size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
+        layout.add_widget(background_image)
+
+        # read text names from file
+
+        filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.01, "y":.5}, spacing = 10)
+
+        self.addfilter(filter_layout)
+
+        layout.add_widget(filter_layout)
+
+        self.add_widget(layout)
+
+        # read number of lines in file, add that many labels and checkboxes, each checkbox will either connect or disconnect filter
+    def addfilter(self,filter_layout):
+        try:
+            file = open("data/blocklist", "r")
+            lines = file.readlines()
+        except Exception as e:
+            print(e)
+            print("Unable to load blocklist\n")
+            return
+
+
+        for line in lines[:20]:
+            # Display up to 20 filters
+            row = BoxLayout(orientation = "horizontal", size_hint_y = None, height = 40)
+            label = Label(text=line.strip(),  halign = "left", valign = "middle", color = (0,0,0))
+            label.bind(size=label.setter("text_size"))
+            checkbox = CheckBox(size_hint_x=None, width = 40, color = (0,0,0))
+
+            checkbox.bind(
+                active=lambda instance, value, line=line.strip(): self.on_checkbox_active(instance, value, line))
+
+            row.add_widget(label)
+            row.add_widget(checkbox)
+            filter_layout.add_widget(row)
+
+        #close file?
+
+
+
+        #self.add_widget(Label(color = (0,0,0), text='This is the Filter configuration Screen'))
+
+    def on_checkbox_active(self, checkbox, value, line):
+        if value:
+            print(f"Checkbox selected for line: {line}")
+            #self.filter_manager.add_block_list(line)
+            #not sure what function to call here
+        else:
+            print(f"Checkbox deselected for line: {line}")
+
+            #self.filter_manager.delete_block_list
+
+
+
+class Stats_Screen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.add_widget(Label(color = (0,0,0), text='This is the Statistics Screen'))
+
+
+class Main_Screen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        # Create Screens
+        self.sm = ScreenManager()
+        self.vpn_screen = VPN_Screen(name='vpn')
+        self.filter_screen = Filter_Screen(name='filter')
+        self.stats_screen = Stats_Screen(name='stat')
+
+        # Add screens to screen manager
+        self.sm.add_widget(self.stats_screen)
+        self.sm.add_widget(self.vpn_screen)
+        self.sm.add_widget(self.filter_screen)
 
         # Create a layout for the menu bar
-
         menu_bar = BoxLayout(size_hint_y=None, height=50)
-        menu_bar.add_widget(Button(text='VPN', on_press=lambda x: setattr(sm, 'current', 'vpn')))
-        menu_bar.add_widget(Button(text='Filter', on_press=lambda x: setattr(sm, 'current', 'filters')))
-        menu_bar.add_widget(Button(text='Statistics', on_press=lambda x: setattr(sm, 'current', 'stat')))
-        menu_bar.add_widget(Button(text='Server', on_press=lambda x: setattr(sm, 'current', 'server')))
+        menu_bar.add_widget(Button(text='VPN', on_press=lambda x: setattr(self.sm, 'current', 'vpn')))
+        menu_bar.add_widget(Button(text='Filter', on_press=lambda x: setattr(self.sm, 'current', 'filter')))
+        menu_bar.add_widget(Button(text='Statistics', on_press=lambda x: setattr(self.sm, 'current', 'stat')))
 
-        self.TimeClock = Label(font_size = 30, size_hint_y= None, height = 50, color = (0,0,0), bold = True)
-        #self.TimeClock.pos_hint = {'right': 1} not too sure how this works, maybe push it to right side of screen
-        Clock.schedule_interval(self.update_ClockTime, 1)
-
-        # Create the main layout
+        # Attach menu bar above screen manager
         main_layout = BoxLayout(orientation='vertical')
-
         main_layout.add_widget(menu_bar)
-        main_layout.add_widget(self.TimeClock)
-        main_layout.add_widget(sm)
+        main_layout.add_widget(self.sm)
+
+        self.add_widget(main_layout)
+
+    def on_pre_enter(self, *args):
+        # Trigger on_enter update for vpn screen when main screen is activaated
+        self.sm.current = 'vpn'
 
 
+class Client_App(App):
 
-        return main_layout
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.cloud_manager = Cloud_Manager()
+        self.vpn_manager = VPN_Manager()
+        self.filter_manager = None
+        self.stats_manager = None
+        # Add manager update loops
+        Clock.schedule_interval(call_async(self.cloud_manager.update), 1)
+        Clock.schedule_interval(call_async(self.vpn_manager.update), 1)
+        return
 
-    def update_ClockTime(self, dt):
-        self.TimeClock.text = time.strftime(("%A, %B %d %Y %I:%M:%S %p %Z"))
-        #self.TimeClock.text = time.strftime(("%c"))
-        #could do %c, which displays Sun Sep 8 07:06:05 2013
-        #idea behind including time zone name is if we change the server to a different location, the time zone could change
-        #even if we don't let user change region it makes the software easier to improve in the future
+    def build(self):
+        root_sm = ScreenManager(transition=NoTransition())
+        login_screen = Login_Screen(name='login')
+        main_screen = Main_Screen(name='main')
+        # Add root screens
+        root_sm.add_widget(login_screen)
+        root_sm.add_widget(main_screen)
+        return root_sm
+
 
 if __name__ == '__main__':
-    UI_DEMOApp().run()
+    asyncio.run(Client_App().async_run(async_lib='asyncio'))
