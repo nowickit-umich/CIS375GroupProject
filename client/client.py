@@ -216,6 +216,8 @@ class VPN_Screen(Screen):
         #TODO I think there is a better way to do this
         if self.cloud_manager.is_ready and not self.cloud_manager.is_monitored:
             asyncio.create_task(self.cloud_manager.monitor_server())
+        if self.vpn_manager.is_ready and not self.vpn_manager.is_monitored:
+            asyncio.create_task(self.vpn_manager.monitor_connection())
 
         # Update status
         self.status_label.text = f"Server Status: {self.cloud_manager.server_status}\nIP: {self.cloud_manager.server_ip}"
@@ -226,12 +228,12 @@ class VPN_Screen(Screen):
             self.connect_button.disabled = False
             self.connect_button.text = "Start Server"
             self.connect_button.on_press = lambda: asyncio.create_task(self.on_create_server())
-        if self.cloud_manager.server_status == "pending":
-            self.connect_button.disabled = True
-        elif self.cloud_manager.server_status == "running":
+        #if self.cloud_manager.server_status == "pending":
+        #    self.connect_button.disabled = True
+        elif self.cloud_manager.server_status == "ok":
             if self.vpn_manager.is_connected:
                 self.connect_button.text = "Disconnect VPN"
-                self.connect_button.on_press = self.vpn_manager.disconnect
+                self.connect_button.on_press = lambda: asyncio.create_task(self.on_disconnect())
                 self.connect_button.disabled = False
             else:
                 self.connect_button.text = "Connect VPN"
@@ -244,7 +246,14 @@ class VPN_Screen(Screen):
         try:
             await asyncio.to_thread(self.vpn_manager.connect, self.cloud_manager.server_ip)
         except Exception as e:
-            Logger.error(f"Create server error: {str(e)}")    
+            Logger.error(f"VPN Connect error: {str(e)}")
+    
+    async def on_disconnect(self):
+        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
+        try:
+            await asyncio.to_thread(self.vpn_manager.disconnect)
+        except Exception as e:
+            Logger.error(f"VPN Disconnect error: {str(e)}")    
 
     async def on_create_server(self):
         Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))

@@ -19,10 +19,10 @@ sys.stderr = sys.stdout
 vi = Windows_VPN()
 
 print("CREATE")
-vi.create_profile("CIS375VPN", "18.118.17.9", "data/vpn.pbk")
+vi.create_profile("CIS375VPN", "3.142.120.139", "data/vpn.pbk")
 time.sleep(2)
 print("CONNECT")
-vi.connect("CIS375VPN", "user", "passtest4321", "data/vpn.pbk")
+vi.connect("CIS375VPN", "user", "%PW%", "data/vpn.pbk")
 time.sleep(1)
 print("STATUS")
 print("STATUS:", vi.status("CIS375VPN"))

@@ -48,7 +48,7 @@ chmod 664 /home/ubuntu/vpnkey.secret
 
 #Configure VPN
 cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf
-sed -i -e "s/%PW%/$password/g" $SPATH/config/swanctl.conf
+sed -i -e "s/%PW%/"$password"/g" $SPATH/config/swanctl.conf
 sed -i -e "s/%IP%/$IP/g" $SPATH/config/swanctl.conf
 sed -i -e "s/%CLIENT_NET%/$CLIENT_NET/g" $SPATH/config/swanctl.conf
 sed -i -e "s/%LOCAL_ADDR%/$LOCAL_ADDR/g" $SPATH/config/swanctl.conf

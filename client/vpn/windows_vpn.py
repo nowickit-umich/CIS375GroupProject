@@ -37,9 +37,9 @@ class Windows_VPN(VPN_Interface):
     def debug(self, x, s):
         return lib.debug(x, ctypes.c_char_p(s))
 
-    def delete_profile():
-        print("Not implemented")
-        pass
+    # Not needed for this implementation
+    def delete_profile(self):
+        return
 
     def connect(self, profile_name, username, password, pbk_path):
         ret = lib.connect_vpn(ctypes.c_char_p(profile_name.encode('utf-8')), 

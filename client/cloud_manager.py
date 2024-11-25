@@ -58,10 +58,11 @@ class Cloud_Manager():
         self.is_monitored = True
         while self.is_ready and self.server_id is not None:
             try:
-                result = await asyncio.to_thread(self.cloud.get_status, self.api_key, self.server_id, self.server_location)
-                self.server_status = result["state"]
-                self.server_ip = result["public_ip"]
-                self.server_ip_private = result["private_ip"]
+                self.server_status = await asyncio.to_thread(self.cloud.get_status, self.api_key, self.server_id, self.server_location)
+                if not self.server_ip or not self.server_ip_private:
+                    result = await asyncio.to_thread(self.cloud.get_ips, self.api_key, self.server_id, self.server_location)
+                    self.server_ip = result["public_ip"]
+                    self.server_ip_private = result["private_ip"]
             except Exception as e:
                 print("Error monitoring server:", e)
             await asyncio.sleep(3)

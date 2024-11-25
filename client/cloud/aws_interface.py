@@ -24,7 +24,7 @@ class AwsInterface(CloudInterface):
         self.security_group_id = None
         self.instance_id = None
         self.ssh_key_data = None
-        # map region ids to names
+        # TODO map region ids to names
         self.region_names = {
             "us-east-1": "United States (Virginia)",
             "us-east-2": "United States (Ohio)",
@@ -259,8 +259,7 @@ class AwsInterface(CloudInterface):
         print("\n STOP SERVER \n")
         pass
 
-    # TODO the 'state' of the instance is not what we need to monitor. Server is not up until 'Status' == ok  
-    def get_status(self, api_key, server_id, server_location):
+    def get_ips(self, api_key, server_id, server_location):
         session = boto3.Session(
             aws_access_key_id=api_key[0],
             aws_secret_access_key=api_key[1],
@@ -275,6 +274,30 @@ class AwsInterface(CloudInterface):
                     'public_ip': response["Reservations"][0]["Instances"][0]["NetworkInterfaces"][0]["Association"]["PublicIp"],
                     'private_ip': response["Reservations"][0]["Instances"][0]["NetworkInterfaces"][0]["PrivateIpAddress"]
             }
+        except be.NoRegionError as e:
+            return
+        except be.ClientError as e:
+            print(e.response)
+            raise e
+        except Exception as e:
+            print(e)
+            raise e
+        return
+    
+    def get_status(self, api_key, server_id, server_location):
+        session = boto3.Session(
+            aws_access_key_id=api_key[0],
+            aws_secret_access_key=api_key[1],
+            region_name=server_location
+        )
+        client = session.client('ec2', region_name=server_location)
+        try:
+            response = client.describe_instance_status(
+                InstanceIds=[server_id],
+                DryRun=False,
+                IncludeAllInstances=False
+            )
+            return response["InstanceStatuses"][0]["InstanceStatus"]["Status"]
         except be.NoRegionError as e:
             return
         except be.ClientError as e:

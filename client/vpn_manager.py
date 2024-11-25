@@ -1,9 +1,13 @@
 import platform
 import paramiko
+import os
+import asyncio
+import time
 
 class VPN_Manager():
     def __init__(self):
         self.is_ready = False
+        self.is_monitored = False
         self.is_connected = False
         self.profile_name = "CIS375VPN"
         self.username = "user"
@@ -29,26 +33,38 @@ class VPN_Manager():
         sftp.close()
         ssh.close()
         return
-
-    async def update(self):
-        if not self.is_ready:
+    
+    async def monitor_connection(self):
+        if self.is_monitored or not self.is_ready:
             return
-        self.is_ready = False
-        await self.status()
-        self.is_ready = True
+        self.is_monitored = True
+        while self.is_ready:
+            try:
+                result = await asyncio.to_thread(self.vpn.status, self.profile_name)
+                if result == 0:
+                    self.is_connected = True
+                else:
+                    self.is_connected = False
+            except Exception as e:
+                print("Error monitoring vpn connection:", e)
+            await asyncio.sleep(3)
+        self.is_monitored = False
         return
 
     def connect(self, server_address):
         self.get_vpn_keys(server_address)
+        time.sleep(0.1)
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/cert.pem")
+        time.sleep(0.1)
+        self.vpn.install_cert(path)
         self.vpn.create_profile(self.profile_name, server_address, self.pbk_path)
-        self.vpn.connect(self.profile_name, self.username, self.password, self.pbk_path)
+        time.sleep(0.1)
+        file = open("data/vpnkey.secret")
+        password = file.readline().strip()
+        self.vpn.connect(self.profile_name, self.username, password, self.pbk_path)
+        self.is_ready = True
         return
     
     async def disconnect(self):
         await self.vpn.disconnect(self.profile_name)
-        return
-    
-    # sets connection status of the vpn
-    async def status(self):
-        self.is_conneted = await self.vpn.status()
         return
