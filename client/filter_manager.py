@@ -34,7 +34,7 @@ class Filter_Manager:
 
             client.sendall(enabled_lists)  
 
-            # client.close()  
+            client.close()  
 
         except Exception as e:
             print(f"Error sending update: {e}")
