@@ -8,12 +8,16 @@ class Filter_Manager:
         self.server_port = 44444
 
     def add_block_list(self, list): # Add a list to the list of block lists
-        self.block_list.append(list)
-        return
-    
+        try:
+            self.block_list.append(list)
+        except Exception as e:
+            print(f"Error adding block list: {e}")
+            
     def delete_block_list(self, list): # Delete a list from the list of block lists
-        self.block_list.remove(list)
-        return
+        try:
+            self.block_list.remove(list)
+        except Exception as e:
+            print(f"Error deleting block list: {e}")
     
     def send_update(self): # Send all enabled block lists to the server
 
@@ -22,19 +26,32 @@ class Filter_Manager:
             if(list['enabled'] == True):
                 enabled_lists.append(list)
 
-        client  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((self.server_host, self.server_port))
-                
-        enabled_lists = pickle.dumps(enabled_lists) # Encoding to send from client to server 
-                
-        client.sendall(enabled_lists)
+        try:
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect((self.server_host, self.server_port)) 
 
-        return
+            enabled_lists = pickle.dumps(enabled_lists)  # Encoding to send from client to server
+
+            client.sendall(enabled_lists)  
+
+            client.close()  
+
+        except Exception as e:
+            print(f"Error sending update: {e}")
+
     
     def enable(self, list): # Enable list from list of block lists
-        list['enabled'] = True
-        return
+        try:
+            list['enabled'] = True
+
+        except Exception as e:
+            print(f"Error enabling block list: {e}")
+
     
     def disable(self, list): # Disable list from list of block lists
-        list['enabled'] = False
-        return
+        try:
+            list['enabled'] = False
+
+        except Exception as e:
+            print(f"Error disabling block list: {e}")
+
