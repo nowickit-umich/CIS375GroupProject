@@ -17,8 +17,5 @@ class VPN_Interface(ABC):
     def create_profile():
         pass
 
-    @abstractmethod
-    def delete_profile():
-        pass
 
 
