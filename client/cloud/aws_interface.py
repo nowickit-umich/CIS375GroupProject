@@ -4,8 +4,8 @@ import botocore.exceptions as be
 import base64
 import logging
 
-logging.getLogger('botocore').setLevel(logging.DEBUG)
-logging.getLogger('boto3').setLevel(logging.DEBUG)
+logging.getLogger('botocore').setLevel(logging.ERROR)
+logging.getLogger('boto3').setLevel(logging.ERROR)
 
 # Constants used to identify resources
 # DO NOT MODIFY ANY RESOURCES WITHOUT THESE TAGS
@@ -13,7 +13,7 @@ ID_KEY = "CIS375VPN"
 ID_VALUE = "delete"
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 class AwsInterface(CloudInterface):
@@ -24,6 +24,29 @@ class AwsInterface(CloudInterface):
         self.security_group_id = None
         self.instance_id = None
         self.ssh_key_data = None
+        # map region ids to names
+        self.region_names = {
+            "us-east-1": "United States (Virginia)",
+            "us-east-2": "United States (Ohio)",
+            "us-west-1": "United States (California)",
+            "us-west-2": "United States (Oregon)",
+            "ca-central-1": "Canada (Central)",
+            "eu-west-1": "Ireland",
+            "eu-west-2": "United Kingdom (London)",
+            "eu-west-3": "France (Paris)",
+            "eu-central-1": "Germany (Frankfurt)",
+            "eu-north-1": "Sweden (Stockholm)",
+            "ap-northeast-1": "Japan (Tokyo)",
+            "ap-northeast-2": "South Korea (Seoul)",
+            "ap-northeast-3": "Japan (Osaka)",
+            "ap-southeast-1": "Singapore",
+            "ap-southeast-2": "Australia (Sydney)",
+            "ap-south-1": "India (Mumbai)",
+            "sa-east-1": "Brazil (São Paulo)",
+            "af-south-1": "South Africa (Cape Town)",
+            "me-south-1": "Bahrain",
+            "me-central-1": "UAE (Dubai)"
+        }
 
     def create_session(self, api_key, region):
         return boto3.Session(
@@ -115,7 +138,7 @@ class AwsInterface(CloudInterface):
         try:
             response = client.create_key_pair(
                 KeyName=key_name,
-                KeyType='ed25519',
+                KeyType='rsa',
                 TagSpecifications=[{
                     'ResourceType': 'key-pair',
                     'Tags': [{'Key':ID_KEY, 'Value':ID_VALUE}]
@@ -182,7 +205,7 @@ class AwsInterface(CloudInterface):
         }
         self.send_to_vpn_interface(vpn_config)
 
-        return {'server_id':instance.instance_id, 'server_ip':instance.private_ip_address}
+        return {'server_id':instance.instance_id, 'server_ip':instance.public_ip_address}
     
     # TODO the functions in the interface should simply return the data, no need for this
     def send_to_vpn_interface(self, config):
@@ -245,11 +268,13 @@ class AwsInterface(CloudInterface):
         )
         client = session.client('ec2', region_name=server_location)
         try:
-            response = client.describe_instance_status(
+            response = client.describe_instances(
                 InstanceIds=[server_id],
-                IncludeAllInstances=False
             )
-            return response["InstanceStatuses"][0]["InstanceStatus"]["Status"]
+            return {'state': response["Reservations"][0]["Instances"][0]["State"]["Name"],
+                    'public_ip': response["Reservations"][0]["Instances"][0]["NetworkInterfaces"][0]["Association"]["PublicIp"],
+                    'private_ip': response["Reservations"][0]["Instances"][0]["NetworkInterfaces"][0]["PrivateIpAddress"]
+            }
         except be.NoRegionError as e:
             return
         except be.ClientError as e:

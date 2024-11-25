@@ -43,6 +43,7 @@ IP=`curl http://169.254.169.254/latest/meta-data/public-ipv4 -H "X-aws-ec2-metad
 
 # Generate password
 password = $(openssl rand -base64 21)
+echo $password > /home/ubuntu/vpnkey.secret
 
 #Configure VPN
 cp $SPATH/templates/swanctl.template $SPATH/config/swanctl.conf

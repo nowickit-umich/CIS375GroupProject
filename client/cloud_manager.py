@@ -10,10 +10,9 @@ class Cloud_Manager():
         self.is_monitored = False
         self.server_id = None
         self.server_ip = None
+        self.server_ip_private = None
         self.server_location = None
         self.server_status = "Offline"
-        self.server_cert = None # probably move to vpn manager
-        self.server_ssh_key = None
         self.cloud = None
         return
     
@@ -59,7 +58,10 @@ class Cloud_Manager():
         self.is_monitored = True
         while self.is_ready and self.server_id is not None:
             try:
-                self.server_status = await asyncio.to_thread(self.cloud.get_status, self.api_key, self.server_id, self.server_location)
+                result = await asyncio.to_thread(self.cloud.get_status, self.api_key, self.server_id, self.server_location)
+                self.server_status = result["state"]
+                self.server_ip = result["public_ip"]
+                self.server_ip_private = result["private_ip"]
             except Exception as e:
                 print("Error monitoring server:", e)
             await asyncio.sleep(3)
@@ -67,8 +69,11 @@ class Cloud_Manager():
         return
 
     def create_server(self):
-        self.server_ssh_key = self.cloud.create_ssh_key("CIS375VPNKEY", self.api_key, self.server_location)
-        instance = self.cloud.create_server(self.server_ssh_key[0], self.api_key, self.server_location)
+        key = self.cloud.create_ssh_key("CIS375VPNKEY", self.api_key, self.server_location)
+        # Save the private key to a file
+        with open("data/sshkey.pem", 'w') as file:
+            file.write(key[1])
+        instance = self.cloud.create_server(key[0], self.api_key, self.server_location)
         self.server_id = instance["server_id"]
         self.server_ip = instance["server_ip"]
         return

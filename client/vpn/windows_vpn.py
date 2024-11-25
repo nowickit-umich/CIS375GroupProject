@@ -1,7 +1,9 @@
 from vpn.vpn_interface import VPN_Interface
 import subprocess
 import ctypes
-lib = ctypes.WinDLL("vpn/windows/windows_vpn.dll")
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+lib = ctypes.WinDLL(os.path.join(current_dir, 'windows/windows_vpn.dll'))
 lib.create_profile.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
 lib.create_profile.restype = ctypes.c_int
 lib.connect_vpn.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]

@@ -21,7 +21,7 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 
 from kivy.logger import Logger
-Logger.setLevel('DEBUG')
+Logger.setLevel('ERROR')
 
 class Login_Screen(Screen):
 
@@ -188,7 +188,7 @@ class VPN_Screen(Screen):
 
         # Server Status Display test
         server_status = BoxLayout(orientation="vertical", padding=20, spacing=10)
-        self.status_label = Label(text=f"Status: {self.cloud_manager.server_status}", font_size=20)
+        self.status_label = Label(text=f"Server Status: {self.cloud_manager.server_status}", font_size=20)
         server_status.add_widget(self.status_label)
 
         # Server Location Selector
@@ -218,7 +218,7 @@ class VPN_Screen(Screen):
             asyncio.create_task(self.cloud_manager.monitor_server())
 
         # Update status
-        self.status_label.text = f"Status: {self.cloud_manager.server_status}"
+        self.status_label.text = f"Server Status: {self.cloud_manager.server_status}\nIP: {self.cloud_manager.server_ip}"
         # Update button text
         if self.cloud_manager.server_status == "Offline":
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
@@ -226,26 +226,34 @@ class VPN_Screen(Screen):
             self.connect_button.disabled = False
             self.connect_button.text = "Start Server"
             self.connect_button.on_press = lambda: asyncio.create_task(self.on_create_server())
-        if self.cloud_manager.server_status == "initializing":
+        if self.cloud_manager.server_status == "pending":
             self.connect_button.disabled = True
-        elif self.cloud_manager.server_status == "ok":
+        elif self.cloud_manager.server_status == "running":
             if self.vpn_manager.is_connected:
-                self.connect_button.disabled = False
                 self.connect_button.text = "Disconnect VPN"
                 self.connect_button.on_press = self.vpn_manager.disconnect
-            else:
                 self.connect_button.disabled = False
+            else:
                 self.connect_button.text = "Connect VPN"
-                self.connect_button.on_press = self.vpn_manager.connect
+                self.connect_button.on_press = lambda: asyncio.create_task(self.on_connect())
+                self.connect_button.disabled = False
         return
     
+    async def on_connect(self):
+        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
+        try:
+            await asyncio.to_thread(self.vpn_manager.connect, self.cloud_manager.server_ip)
+        except Exception as e:
+            Logger.error(f"Create server error: {str(e)}")    
+
     async def on_create_server(self):
-        self.connect_button.disabled = True
-        self.server_location_selector.disabled = True
+        Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
+        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
+        Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', True))
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
         except Exception as e:
-            Logger.error("Create server error:", e)        
+            Logger.error(f"Create server error: {str(e)}")        
 
     def on_pre_enter(self, *args):
         # Update location selector
@@ -326,6 +334,10 @@ class Client_App(App):
         self.root_sm.add_widget(login_screen)
         self.root_sm.add_widget(main_screen)
         return self.root_sm
+    
+    def on_stop(self):
+        # delete cloud resources
+        pass
 
 
 if __name__ == '__main__':
