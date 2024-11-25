@@ -259,7 +259,7 @@ class AwsInterface(CloudInterface):
         print("\n STOP SERVER \n")
         pass
 
-    # TODO not tested
+    # TODO the 'state' of the instance is not what we need to monitor. Server is not up until 'Status' == ok  
     def get_status(self, api_key, server_id, server_location):
         session = boto3.Session(
             aws_access_key_id=api_key[0],
