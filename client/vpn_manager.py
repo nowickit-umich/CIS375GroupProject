@@ -69,5 +69,4 @@ class VPN_Manager():
         return
     
     def disconnect(self):
-        self.vpn.disconnect(self.profile_name)
-        return
+        return self.vpn.disconnect(self.profile_name)

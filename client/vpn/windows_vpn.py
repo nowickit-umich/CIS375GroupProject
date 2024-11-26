@@ -82,6 +82,7 @@ class Windows_VPN(VPN_Interface):
             logger.error(f"VPN Connection Error: {e}")
             return -1
 
+    # Return 0 on successful disconnect
     def disconnect(self, profile_name):
         try:
             ret = lib.disconnect_vpn(profile_name.encode('utf-8'))
