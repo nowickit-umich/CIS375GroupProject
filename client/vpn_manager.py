@@ -3,6 +3,8 @@ import paramiko
 import os
 import asyncio
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 class VPN_Manager():
     def __init__(self):
@@ -32,6 +34,7 @@ class VPN_Manager():
         sftp.get("/home/ubuntu/vpnkey.secret", "data/vpnkey.secret")
         sftp.close()
         ssh.close()
+        logger.info("Successfully retrieved server keys")
         return
     
     async def monitor_connection(self):
@@ -46,7 +49,7 @@ class VPN_Manager():
                 else:
                     self.is_connected = False
             except Exception as e:
-                print("Error monitoring vpn connection:", e)
+                logger.error(f"Error monitoring vpn connection: {e}")
             await asyncio.sleep(3)
         self.is_monitored = False
         return
@@ -55,8 +58,8 @@ class VPN_Manager():
         self.get_vpn_keys(server_address)
         time.sleep(0.1)
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/cert.pem")
-        time.sleep(0.1)
         self.vpn.install_cert(path)
+        time.sleep(0.1)
         self.vpn.create_profile(self.profile_name, server_address, self.pbk_path)
         time.sleep(0.1)
         file = open("data/vpnkey.secret")

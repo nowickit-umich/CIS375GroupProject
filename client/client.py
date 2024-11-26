@@ -1,11 +1,3 @@
-from cloud_manager import Cloud_Manager
-from vpn_manager import VPN_Manager
-from statistics_manager import Stats_Manager
-from filter_manager import Filter_Manager
-
-import os
-import asyncio
-
 #UI Imports
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -20,8 +12,17 @@ from kivy.metrics import dp
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 
-from kivy.logger import Logger
-Logger.setLevel('ERROR')
+from cloud_manager import Cloud_Manager
+from vpn_manager import VPN_Manager
+from statistics_manager import Stats_Manager
+from filter_manager import Filter_Manager
+
+import os
+import asyncio
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class Login_Screen(Screen):
 
@@ -121,13 +122,12 @@ class Login_Screen(Screen):
         app = App.get_running_app()
         is_valid = False
         try:
-            await asyncio.to_thread(app.cloud_manager.setup, credentials) 
-            is_valid = True
-        except ValueError as e:
-            pass
+            logger.debug("Checking Credentials")
+            is_valid = await asyncio.to_thread(app.cloud_manager.setup, credentials) 
         except Exception as e:
             # TODO error handling            
             is_valid = False
+            logger.error(f"Failed to check credentials {e}")
         # update status
         Clock.schedule_once(lambda x: self.update_status(is_valid, credentials))
         return
@@ -246,14 +246,14 @@ class VPN_Screen(Screen):
         try:
             await asyncio.to_thread(self.vpn_manager.connect, self.cloud_manager.server_ip)
         except Exception as e:
-            Logger.error(f"VPN Connect error: {str(e)}")
+            logger.error(f"VPN Connect error: {str(e)}")
     
     async def on_disconnect(self):
         Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
         try:
             await asyncio.to_thread(self.vpn_manager.disconnect)
         except Exception as e:
-            Logger.error(f"VPN Disconnect error: {str(e)}")    
+            logger.error(f"VPN Disconnect error: {str(e)}")    
 
     async def on_create_server(self):
         Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
@@ -262,7 +262,7 @@ class VPN_Screen(Screen):
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
         except Exception as e:
-            Logger.error(f"Create server error: {str(e)}")        
+            logger.error(f"Create server error: {str(e)}")        
 
     def on_pre_enter(self, *args):
         # Update location selector
@@ -322,7 +322,7 @@ class Main_Screen(Screen):
         self.add_widget(main_layout)
 
     def on_pre_enter(self, *args):
-        # Trigger on_enter update for vpn screen when main screen is activaated
+        # Trigger on_enter update for vpn screen when main screen is activated
         self.sm.current = 'vpn'
 
 class Client_App(App):
@@ -345,6 +345,9 @@ class Client_App(App):
         return self.root_sm
     
     def on_stop(self):
+        # disconnect VPN
+        while(self.vpn_manager.disconnect() == 0):
+            continue
         # delete cloud resources
         pass
 

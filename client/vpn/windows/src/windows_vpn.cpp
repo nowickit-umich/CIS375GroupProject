@@ -1,55 +1,15 @@
 #include "pch.h"
 #include "windows_vpn.h"
 
-int debug(int x, char* s) {
-    std::cout << s << std::endl;
-    std::cerr << s << std::endl;
-    return x + x;
-}
-
-// Debug tool
-static void get_info(std::string entryName) {
-    struct tagRASENTRYA rasEntry = { 0 };
-    rasEntry.dwSize = sizeof(RASENTRYA);
-    DWORD dwEntrySize = sizeof(RASENTRYA);
-
-    // Retrieve the properties of the RAS entry
-    DWORD dwBufferSize = 0;  // No additional buffer needed
-    DWORD result = RasGetEntryPropertiesA(NULL, entryName.c_str(), &rasEntry, &dwEntrySize, NULL, &dwBufferSize);
-
-    if (result != ERROR_SUCCESS) {
-        char errorMsg[256];
-        RasGetErrorStringA(result, errorMsg, sizeof(errorMsg) / sizeof(char));
-        std::wcerr << L"Error retrieving RAS entry: " << errorMsg << std::endl;
-        return;
-    }
-
-    // Print the details of the RAS entry
-    std::cout << "Details for RAS Entry: " << entryName << std::endl;
-    std::cout << "-----------------------------------------" << std::endl;
-    std::cout << "Device Type: " << rasEntry.szDeviceType << std::endl;
-    std::cout << "Device Name: " << rasEntry.szDeviceName << std::endl;
-    std::cout << "Phone Number: " << rasEntry.szLocalPhoneNumber << std::endl;
-    std::cout << "IP Protocols: " << ((rasEntry.dwfNetProtocols & RASNP_Ip) ? L"TCP/IP" : L"None") << std::endl;
-    std::cout << "VPN Strategy: " << rasEntry.dwVpnStrategy << std::endl;
-
-    if (rasEntry.dwType == RASET_Vpn) {
-        std::cout << "Connection Type: VPN" << std::endl;
-    }
-
-    std::cout << "Encryption Type: " << rasEntry.dwEncryptionType << std::endl;
-    std::cout << "Options: " << rasEntry.dwfOptions << std::endl;
-    std::cout << "Additional Options: " << rasEntry.dwfOptions2 << std::endl;
-    std::cout << "-----------------------------------------" << std::endl;
-
-    return;
-}
-
 static int get_conn_by_name(char* name, HRASCONN &handle) {
     // Get size needed for connection buffer
     DWORD size = 0;
     DWORD num_con = 0;
     DWORD result = RasEnumConnectionsA(NULL, &size, &num_con);
+    if (result == ERROR_SUCCESS){
+        handle = nullptr;
+        return 0;
+    }
     if (result != ERROR_BUFFER_TOO_SMALL) {
         std::cerr << "Failed to retrieve buffer size. Error: " << result << std::endl;
         return 1;

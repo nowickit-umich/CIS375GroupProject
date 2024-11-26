@@ -27,6 +27,15 @@ class Filter_Manager:
                 enabled_lists.append(list)
 
         try:
+            # File transfer will use paramiko module sftp - easier and more reliable than writing another service
+            # See vpn_manager get_vpn_keys function
+            # block list files just need to be copied into the "/etc/dnsmasq.d/" directory 
+            # block list format is one entry per line:
+            #  for single domain "dnsname":
+            #    address=dnsname/
+            #  for all subdomains:
+            #    address=/dnsname/
+            #  
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect((self.server_host, self.server_port)) 
 

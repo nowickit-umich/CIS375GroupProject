@@ -11,7 +11,6 @@
 #include <raserror.h>
 #include <iostream>
 
-extern "C" WINDOWS_VPN_API int debug(int x, char* s);
 extern "C" WINDOWS_VPN_API int create_profile(char* vpnEntryName, char* vpnServerAddress, char* pbkPath);
 extern "C" WINDOWS_VPN_API int delete_profile();
 extern "C" WINDOWS_VPN_API int connect_vpn(char* profileName, char* username, char* password, char* pbkPath);
