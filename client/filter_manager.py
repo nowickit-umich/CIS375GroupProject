@@ -1,5 +1,5 @@
-import socket
 import pickle 
+import paramiko
 
 class Filter_Manager:
     def __init__(self):
@@ -26,24 +26,25 @@ class Filter_Manager:
             if(list['enabled'] == True):
                 enabled_lists.append(list)
 
+        with open('enabled_lists.pkl', "wb") as f:
+            pickle.dump(enabled_lists, f)
+
         try:
-            # File transfer will use paramiko module sftp - easier and more reliable than writing another service
-            # See vpn_manager get_vpn_keys function
-            # block list files just need to be copied into the "/etc/dnsmasq.d/" directory 
-            # block list format is one entry per line:
-            #  for single domain "dnsname":
-            #    address=dnsname/
-            #  for all subdomains:
-            #    address=/dnsname/
-            #  
-            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client.connect((self.server_host, self.server_port)) 
+            
+            key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            
+            ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
+            sftp = ssh.open_sftp()
+            
+            sftp_file_path = "/etc/dnsmasq.d/enabled_lists.pkl"
+            sftp.put('enabled_lists.pkl', sftp_file_path)
+            
+            sftp.close()
+            ssh.close()
 
-            enabled_lists = pickle.dumps(enabled_lists)  # Encoding to send from client to server
-
-            client.sendall(enabled_lists)  
-
-            client.close()  
+            print("Enabled block lists successfully sent to the server.")
 
         except Exception as e:
             print(f"Error sending update: {e}")
