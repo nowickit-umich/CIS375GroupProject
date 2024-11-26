@@ -1,69 +1,49 @@
-from cloud.cloud_interface import CloudInterface 
+from cloud.cloud_interface import CloudInterface
 import boto3
 import botocore.exceptions as be
-import base64
 import logging
 
-logging.getLogger('botocore').setLevel(logging.DEBUG)
-logging.getLogger('boto3').setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logging.getLogger('botocore').setLevel(logging.ERROR)
+logging.getLogger('boto3').setLevel(logging.ERROR)
 
-# Constants used to identify resources
-# DO NOT MODIFY ANY RESOURCES WITHOUT THESE TAGS
 ID_KEY = "CIS375VPN"
 ID_VALUE = "delete"
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 class AwsInterface(CloudInterface):
-
-    def __init__(self):
-        # TODO the interface should not have any data members
-        # return the data to the caller
-        self.security_group_id = None
-        self.instance_id = None
-        self.ssh_key_data = None
-
     def create_session(self, api_key, region):
         return boto3.Session(
             aws_access_key_id=api_key[0],
             aws_secret_access_key=api_key[1],
             region_name=region
         )
-    
+
     def create_security_group(self, client, group_name, description):
         try:
-            # Check for existing security group
             response = client.describe_security_groups(
-                GroupNames=[group_name],
-                Filters=[{
-                    'Name': f'tag:{ID_KEY}',
-                    'Values': [ID_VALUE]
-                }]
+                Filters=[{'Name': f'tag:{ID_KEY}', 'Values': [ID_VALUE]}]
             )
-            if len(response['SecurityGroups']) == 0:
-               raise
-            logger.info(f"Security group {group_name} already exists.")
-            return response['SecurityGroups'][0]['GroupId']
-        except be.ClientError as e:
-            pass
-        try:
+            for group in response.get('SecurityGroups', []):
+                if group['GroupName'] == group_name:
+                    logger.info(f"Security group {group_name} already exists.")
+                    return group['GroupId']
+        except be.ClientError:
+            logger.debug("No existing security group found, proceeding with creation.")
 
+        try:
             response = client.create_security_group(
                 Description=description,
                 GroupName=group_name,
                 TagSpecifications=[{
                     'ResourceType': 'security-group',
-                    'Tags': [{'Key':ID_KEY, 'Value':ID_VALUE}]
+                    'Tags': [{'Key': ID_KEY, 'Value': ID_VALUE}]
                 }]
             )
+            group_id = response['GroupId']
             logger.info(f"Security group {group_name} created successfully.")
-
-            # Authorize Ingress Rules
-            self.authorize_security_group_ingress(client, response['GroupId'])
-
-            return response['GroupId']
+            self.authorize_security_group_ingress(client, group_id)
+            return group_id
         except be.ClientError as e:
             logger.error(f"Failed to create security group: {e.response['Error']['Message']}")
             raise
@@ -93,173 +73,153 @@ class AwsInterface(CloudInterface):
                     }
                 ]
             )
-            logger.info("Ingress rules added to the security group.")
+            logger.info(f"Ingress rules added to security group {group_id}.")
         except be.ClientError as e:
-            logger.error(f"Failed to authorize security group ingress: {e.response['Error']['Message']}")
+            logger.error(f"Failed to authorize ingress for group {group_id}: {e.response['Error']['Message']}")
             raise
 
-    # Returns list containing key name followed by key data
     def create_ssh_key(self, key_name, api_key, region):
         session = self.create_session(api_key, region)
         client = session.client('ec2')
-        # Delete key if it already exists
         try:
-            response = client.delete_key_pair(
-                KeyName=key_name,
-            )
-        except Exception as e:
-            print(e)
-            raise
-            pass
-        # Create the key
+            client.delete_key_pair(KeyName=key_name)
+            logger.info(f"Deleted existing key pair {key_name}.")
+        except be.ClientError:
+            logger.debug(f"No existing key pair {key_name} found.")
+
         try:
             response = client.create_key_pair(
                 KeyName=key_name,
                 KeyType='ed25519',
                 TagSpecifications=[{
                     'ResourceType': 'key-pair',
-                    'Tags': [{'Key':ID_KEY, 'Value':ID_VALUE}]
+                    'Tags': [{'Key': ID_KEY, 'Value': ID_VALUE}]
                 }],
                 KeyFormat='pem'
             )
             logger.info(f"SSH key pair {key_name} created successfully.")
-            return [key_name, response['KeyMaterial']]
+            return response['KeyMaterial']
         except be.ClientError as e:
             logger.error(f"Failed to create SSH key pair: {e.response['Error']['Message']}")
             raise
 
-    # Returns the server data
+    def find_ami(self, client, name_filter, version_filter):
+        try:
+            response = client.describe_images(
+                Filters=[
+                    {'Name': 'name', 'Values': [f"{name_filter}*{version_filter}*"]},
+                    {'Name': 'state', 'Values': ['available']}
+                ],
+                Owners=['099720109477']
+            )
+            if not response['Images']:
+                raise ValueError("No matching AMI found.")
+            return sorted(response['Images'], key=lambda x: x['CreationDate'], reverse=True)[0]['ImageId']
+        except be.ClientError as e:
+            logger.error(f"Failed to find AMI: {e.response['Error']['Message']}")
+            raise
+
     def create_server(self, ssh_key_name, api_key, region):
         session = self.create_session(api_key, region)
         client = session.client('ec2')
         resource = session.resource('ec2')
 
-        # Create Security Group
-        self.security_group_id = self.create_security_group(
-            client,
-            group_name='CIS375ALLOWVPN',
-            description='CIS375 VPN App security group'
+        security_group_id = self.create_security_group(
+            client, group_name='CIS375ALLOWVPN', description='CIS375 VPN App security group'
         )
 
-        # TODO get valid ami for the selected region - search for ubuntu 24.04
-        ami_id = 'ami-0ea3c35c5c3284d82' # us-east-2
+        try:
+            ami_id = self.find_ami(client, "ubuntu", "24.04")
+        except ValueError as e:
+            logger.error(e)
+            raise
 
-        # load server install script
         try:
             with open('../server/install.sh', 'r') as file:
-                script_data = file.read()
-        except:
+                user_data = file.read()
+        except FileNotFoundError:
+            logger.error("Install script not found.")
             raise
 
-        # Launch EC2 Instance
-        instance = resource.create_instances(
-            BlockDeviceMappings=[{
-                'DeviceName': '/dev/xvda',
-                'Ebs': {'VolumeSize': 10, 'VolumeType': 'gp2'}
-            }],
-            ImageId=ami_id,
-            InstanceType='t2.micro',
-            KeyName=ssh_key_name,
-            UserData=script_data,
-            MaxCount=1,
-            MinCount=1,
-            SecurityGroupIds=[self.security_group_id],
-            TagSpecifications=[{
-                'ResourceType': 'instance',
-                'Tags': [{'Key':ID_KEY, 'Value':ID_VALUE}]
-            }],
-        )[0]
+        try:
+            instance = resource.create_instances(
+                BlockDeviceMappings=[{
+                    'DeviceName': '/dev/xvda',
+                    'Ebs': {'VolumeSize': 10, 'VolumeType': 'gp2'}
+                }],
+                ImageId=ami_id,
+                InstanceType='t2.micro',
+                KeyName=ssh_key_name,
+                UserData=user_data,
+                MaxCount=1,
+                MinCount=1,
+                SecurityGroupIds=[security_group_id],
+                TagSpecifications=[{
+                    'ResourceType': 'instance',
+                    'Tags': [{'Key': ID_KEY, 'Value': ID_VALUE}]
+                }],
+            )[0]
+            logger.info(f"Instance {instance.id} created.")
+            instance.wait_until_running()
+            instance.reload()
+            return {'InstanceId': instance.id, 'PublicIp': instance.public_ip_address}
+        except be.ClientError as e:
+            logger.error(f"Failed to create EC2 instance: {e.response['Error']['Message']}")
+            raise
 
-        logger.info(f"EC2 instance {instance.instance_id} created successfully.")
-
-        # Send Configuration Info to VPN
-        # TODO the functions in the interface should simply return the data, no need for this
-        vpn_config = {
-            'instance_id': self.instance_id,
-            'public_ip': instance.public_ip_address,
-            'ssh_key': self.ssh_key_data
-        }
-        self.send_to_vpn_interface(vpn_config)
-
-        return {'server_id':instance.instance_id, 'server_ip':instance.private_ip_address}
-    
-    # TODO the functions in the interface should simply return the data, no need for this
-    def send_to_vpn_interface(self, config):
-        """
-        Placeholder for sending configuration to VPN interface.
-        Replace with actual implementation to communicate with VPN.
-        """
-        logger.info(f"Sending configuration to VPN interface: {config}")
-
-    def terminate_cloud(self, api_key, region):
+    def delete_server(self, api_key, region, instance_id):
         session = self.create_session(api_key, region)
         client = session.client('ec2')
-
-        # TODO we should find and delete all resources with the ID_KEY tags 
-
         try:
-            # Terminate EC2 Instance
-            if self.instance_id:
-                client.terminate_instances(InstanceIds=[self.instance_id])
-                logger.info(f"EC2 instance {self.instance_id} terminated successfully.")
-                self.instance_id = None
-
-            # Delete Security Group
-            if self.security_group_id:
-                client.delete_security_group(GroupId=self.security_group_id)
-                logger.info(f"Security group {self.security_group_id} deleted successfully.")
-                self.security_group_id = None
-
-            # Delete SSH Key Pair
-            if self.ssh_key_data:
-                client.delete_key_pair(KeyName='CIS375VPN')
-                logger.info("SSH key pair 'cisvpn' deleted successfully.")
-                self.ssh_key_data = None
-
+            client.terminate_instances(InstanceIds=[instance_id])
+            logger.info(f"EC2 instance {instance_id} deleted successfully.")
         except be.ClientError as e:
-            logger.error(f"Error during termination: {e.response['Error']['Message']}")
+            logger.error(f"Error deleting EC2 instance {instance_id}: {e.response['Error']['Message']}")
             raise
-    
-    # TODO
-    def delete_server(self):
-        print("\n DELETE SERVER \n")
-        pass
-   
-    # TODO
-    def start_server(self):
-        print("\n START SERVER \n")
-        pass
 
-    # TODO
-    def stop_server(self):
-        print("\n STOP SERVER \n")
-        pass
-
-    # TODO not tested
-    def get_status(self, api_key, server_id, server_location):
-        session = boto3.Session(
-            aws_access_key_id=api_key[0],
-            aws_secret_access_key=api_key[1],
-            region_name=server_location
-        )
-        client = session.client('ec2', region_name=server_location)
+    def start_server(self, api_key, region, instance_id):
+        session = self.create_session(api_key, region)
+        client = session.client('ec2')
         try:
+            client.start_instances(InstanceIds=[instance_id])
+            logger.info(f"EC2 instance {instance_id} started successfully.")
+        except be.ClientError as e:
+            logger.error(f"Error starting EC2 instance {instance_id}: {e.response['Error']['Message']}")
+            raise
+
+    def stop_server(self, api_key, region, instance_id):
+        session = self.create_session(api_key, region)
+        client = session.client('ec2')
+        try:
+            client.stop_instances(InstanceIds=[instance_id])
+            logger.info(f"EC2 instance {instance_id} stopped successfully.")
+        except be.ClientError as e:
+            logger.error(f"Error stopping EC2 instance {instance_id}: {e.response['Error']['Message']}")
+            raise
+
+    def get_status(self, api_key, server_id, server_location):
+        try:
+            session = self.create_session(api_key, server_location)
+            client = session.client('ec2', region_name=server_location)
             response = client.describe_instance_status(
                 InstanceIds=[server_id],
-                IncludeAllInstances=False
+                IncludeAllInstances=True
             )
-            return response["InstanceStatuses"][0]["InstanceStatus"]["Status"]
-        except be.NoRegionError as e:
-            return
+            if not response["InstanceStatuses"]:
+                logger.info(
+                    f"No status found for instance ID: {server_id}. The instance might not exist or is terminated.")
+                return "Instance not found or terminated."
+            status = response["InstanceStatuses"][0]["InstanceState"]["Name"]
+            logger.info(f"Instance {server_id} is currently {status}.")
+            return status
         except be.ClientError as e:
-            print(e.response)
-            raise e
+            error_message = e.response['Error']['Message']
+            logger.error(f"ClientError while retrieving status for instance {server_id}: {error_message}")
+            return f"Error: {error_message}"
         except Exception as e:
-            print(e)
-            raise e
-        return
+            logger.error(f"Unexpected error while retrieving status for instance {server_id}: {str(e)}")
+            return f"Error: {str(e)}"
 
-    # Verify the api key is valid
     def test_key(self, api_key):
         session = boto3.Session(
             aws_access_key_id=api_key[0],
@@ -267,16 +227,18 @@ class AwsInterface(CloudInterface):
         )
         client = session.client('ec2', region_name="us-east-1")
         try:
-            client.describe_regions(AllRegions=False, DryRun=True)
+            client.describe_regions(AllRegions=False, DryRun=False)
+            logger.info("API key is valid.")
+            return True
         except be.ClientError as e:
-            if e.response["Error"]["Code"] == "DryRunOperation":
-                return 0
+            error_code = e.response["Error"]["Code"]
+            if error_code in ["AuthFailure", "InvalidClientTokenId"]:
+                logger.error("Invalid API key provided.")
+                return False
             else:
-                print(e.response)
+                logger.error(f"Unexpected error occurred: {e.response['Error']['Message']}")
                 raise e
-        return -1
 
-    # Return a list of valid server locations
     def get_locations(self, api_key):
         session = boto3.Session(
             aws_access_key_id=api_key[0],
@@ -284,8 +246,10 @@ class AwsInterface(CloudInterface):
         )
         client = session.client('ec2', region_name="us-east-1")
         try:
-            res = client.describe_regions(AllRegions=False, DryRun=False)
+            response = client.describe_regions(AllRegions=False, DryRun=False)
+            locations = [region["RegionName"] for region in response["Regions"]]
+            logger.info(f"Available regions: {locations}")
+            return locations
         except be.ClientError as e:
-            print(e.response)
-            raise e
-        return [region['RegionName'] for region in res['Regions']]
+            logger.error(f"Error while fetching regions: {e.response['Error']['Message']}")
+            raise
