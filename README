@@ -1,16 +1,4 @@
-Netfilter:
-https://www.netfilter.org/
-https://wiki.nftables.org/wiki-nftables/index.php/Main_Page
-https://wiki.nftables.org/wiki-nftables/index.php/Queueing_to_userspace
+CIS 375 Group Project
 
-StrongSwan Reference
-https://docs.strongswan.org/docs/5.9/index.html
-Remote access: https://www.strongswan.org/testing/testresults6/ikev2/rw-psk-ipv4/
-
-Kernel Modules:
-https://linux-kernel-labs.github.io/refs/pull/189/merge/labs/networking.html#lab-objectives
-https://sysprog21.github.io/lkmpg
-
-
-GUI Lib:
-https://kivy.org/doc/stable/gettingstarted/intro.html
+This application automatically deploys a VPN server on a cloud service provider (only AWS is currently supported).
+The application manages the VPN connection and allows the user to filter DNS traffic and view statistcs about their network usage. 
