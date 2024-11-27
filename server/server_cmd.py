@@ -21,7 +21,7 @@ def main():
     duration = 15
     count = freq * duration
     while(True):
-        if check_connection:
+        if check_connection():
             # Reset
             count = freq * duration
         else:
