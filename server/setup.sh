@@ -4,9 +4,7 @@
 #Run as root
 
 CLIENT_NET="10.99.99.0\/24"
-
-# TODO INTERFACE NAME IS NOT STATIC
-SERVER_INTERFACE="enX0"
+SERVER_INTERFACE=$(ip -o link show | awk -F': ' '!/lo/ {print $2; exit}')
 LOCAL_ADDR=$(hostname -I)
 SPATH=$(dirname $(realpath "$0"))
 
@@ -66,6 +64,7 @@ mv $SPATH/cert.pem /etc/swanctl/x509/cert.pem
 
 # start server_cmd service
 cp $SPATH/server_cmd.py /usr/bin/server_cmd.py
+chmod 755 /usr/bin/server_cmd.py
 cp $SPATH/systemd/server_cmd.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl start server_cmd
