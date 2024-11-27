@@ -1,6 +1,5 @@
 import time
 import os
-import subprocess
 
 # terminate server after 15 minutes of inactivity 
 
@@ -19,12 +18,12 @@ def main():
     # Frequency of checks in checks/minute
     freq = 2
     # Number of minutes before shutdown
-    time = 15
-    count = freq * time
+    duration = 15
+    count = freq * duration
     while(True):
         if check_connection:
             # Reset
-            count = freq * time
+            count = freq * duration
         else:
             count -= 1
         if count < 0:

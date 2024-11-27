@@ -1,9 +1,9 @@
 class Stats_Manager:
-    def __init__(self, vpn_manager, cloud_manager, filter_manager):
+    def __init__(self):
         # Initialize the managers for interacting with stats
-        self.vpn_manager = vpn_manager
-        self.cloud_manager = cloud_manager
-        self.filter_manager = filter_manager
+        #self.vpn_manager = vpn_manager
+        #self.cloud_manager = cloud_manager
+        #self.filter_manager = filter_manager
         
         # Initialize data structures for statistics
         self.vpn_status = "Disconnected"
