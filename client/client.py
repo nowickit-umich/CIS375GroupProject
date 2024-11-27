@@ -127,7 +127,7 @@ class Login_Screen(Screen):
         except Exception as e:
             # TODO error handling            
             is_valid = False
-            logger.error(f"Failed to check credentials {e}")
+            logger.error(f"Error checking credentials: {e}")
         # update status
         Clock.schedule_once(lambda x: self.update_status(is_valid, credentials))
         return
@@ -142,40 +142,42 @@ class Login_Screen(Screen):
             if self.save_cred:
                 self.save_credentials(credentials)
             # Switch to main screen
+            logger.info("Login Successful")
             self.manager.current = 'main'
         else:
             self.message.color = (1, 0.2, 0.2, 1)
             self.message.text = "Error: Invalid Credentials"
+            logger.info("Login Failed")
     
     def save_credentials(self, credentials):
         try:
             file = open("data/credentials.secret", "w")
         except Exception as e:
-            print(e)
-            print("Unable to save credentials")
+            logger.error(f"Error saving credentials: {e}")
             return
         file.write(credentials[0] + '\n')
         file.write(credentials[1] + '\n')
         file.write(credentials[2] + '\n')
+        logger.info("Credentials Saved Successfully")
         return
     
     def read_credentials(self):
         try:
             file = open("data/credentials.secret", "r")
-        except:
+        except Exception as e:
+            logger.error(f"Error reading credentials: {e}")
             return
         cloud = file.readline().strip()
         access = file.readline().strip()
         secret = file.readline().strip()
-        if not cloud or not access or not secret:
+        if (not cloud) or (not access) or (not secret) or (cloud not in self.cloud_types):
             os.remove("data/credentials.secret")
-            return
-        if cloud not in self.cloud_types:
-            os.remove("data/credentials.secret")
+            logger.debug("Removing invalid credential file")
             return
         self.input_access.text = access
         self.input_secret.text = secret
         self.save_cred.active = True
+        logger.info("Successfully read credentials from file")
         return
 
 class VPN_Screen(Screen):
