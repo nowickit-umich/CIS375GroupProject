@@ -284,13 +284,10 @@ class Filter_Screen(Screen):
 
         self.add_widget(Label(text='This is the Filter configuration Screen'))
 
-
-
-
-class statScreen(Screen):
-    def __init__(self, stats_manager, **kwargs):
+class Stats_Screen(Screen):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.stats_manager = stats_manager
+        self.stats_manager = App.get_running_app().stats_manager
 
         self.add_widget(Label(text='This is the Statistics Screen'))
 
@@ -312,10 +309,6 @@ class statScreen(Screen):
         self.server_label.text = f"Server Status: {self.stats_manager.get_server_status()}"
         self.filter_label.text = f"Filter Status: {self.stats_manager.get_filter_status()}"
 
-
-
-
-
 class Main_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -324,7 +317,7 @@ class Main_Screen(Screen):
         self.sm = ScreenManager()
         self.vpn_screen = VPN_Screen(name='vpn')
         self.filter_screen = Filter_Screen(name='filter')
-        self.stats_screen = statScreen(name='stat')
+        self.stats_screen = Stats_Screen(name='stat')
 
         # Add screens to screen manager
         self.sm.add_widget(self.stats_screen)
@@ -366,9 +359,6 @@ class Client_App(App):
         login_screen = Login_Screen(name='login')
         main_screen = Main_Screen(name='main')
      
-
-
-
         # Add root screens
         self.root_sm.add_widget(login_screen)
         self.root_sm.add_widget(main_screen)
