@@ -102,7 +102,15 @@ class Login_Screen(Screen):
         # Check for saved credentials
         self.read_credentials()    
     
-    def login(self, x):
+    def login(self, b):
+        '''
+        Description: Function called from the login button. Performs basic input validation,
+        updates the login screen message, and then passes the input to the 
+        _check_credentials function to asyncronously validate.
+
+        param b: instance of the button
+        return: None
+        '''
         access = self.input_access.text
         secret = self.input_secret.text
         cloud_name = self.select_cloud.text
@@ -119,6 +127,13 @@ class Login_Screen(Screen):
         return
     
     async def _check_credentials(self, credentials):
+        '''
+        Description: Async function which calls the cloud_manager setup function to validate 
+        the given credentials. Calls update_status with the result of the credential validation.
+
+        param credentials: list containing [cloud_name, access_key, secret_key]
+        return: None 
+        '''
         app = App.get_running_app()
         is_valid = False
         try:
@@ -128,11 +143,19 @@ class Login_Screen(Screen):
             # TODO error handling            
             is_valid = False
             logger.error(f"Error checking credentials: {e}")
-        # update status
+        # schedule update status to execute
         Clock.schedule_once(lambda x: self.update_status(is_valid, credentials))
         return
         
     def update_status(self, is_valid, credentials):
+        '''
+        Description: Updates the login screen message with the result of the login attempt. Switches to the
+        main screen if the login was successful.
+
+        param is_valid: boolean value. True if the credentials were valid.
+        param credentials: list containing [cloud_name, access_key, secret_key]
+        return: None
+        '''
         if is_valid:
             # Login Success
             self.message.color = (1,1,1,1)
@@ -150,6 +173,12 @@ class Login_Screen(Screen):
             logger.info("Login Failed")
     
     def save_credentials(self, credentials):
+        '''
+        Description: Saves the given credentials to the credential file.
+
+        param credentials: list containing [cloud_name, access_key, secret_key]
+        return: None
+        '''
         try:
             file = open("data/credentials.secret", "w")
         except Exception as e:
@@ -162,6 +191,11 @@ class Login_Screen(Screen):
         return
     
     def read_credentials(self):
+        '''
+        Description: Reads credentials from the credential file.
+
+        return: None
+        '''
         try:
             file = open("data/credentials.secret", "r")
         except Exception as e:
@@ -370,7 +404,7 @@ class Client_App(App):
         # disconnect VPN
         while(self.vpn_manager.disconnect() == 0):
             continue
-        # delete cloud resources
+        # delete cloud resources TODO
         pass
 
 
