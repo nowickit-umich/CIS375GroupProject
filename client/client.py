@@ -284,11 +284,37 @@ class Filter_Screen(Screen):
 
         self.add_widget(Label(text='This is the Filter configuration Screen'))
 
-class Stats_Screen(Screen):
-    def __init__(self, **kwargs):
+
+
+
+class statScreen(Screen):
+    def __init__(self, stats_manager, **kwargs):
         super().__init__(**kwargs)
+        self.stats_manager = stats_manager
 
         self.add_widget(Label(text='This is the Statistics Screen'))
+
+        # Display VPN status
+        self.vpn_label = Label(text=f"VPN Status: {self.stats_manager.get_vpn_status()}")
+        self.add_widget(self.vpn_label)
+
+        # Display Server status
+        self.server_label = Label(text=f"Server Status: {self.stats_manager.get_server_status()}")
+        self.add_widget(self.server_label)
+
+        # Display Filter status
+        self.filter_label = Label(text=f"Filter Status: {self.stats_manager.get_filter_status()}")
+        self.add_widget(self.filter_label)
+
+    def update_stats(self):
+        # Update the labels with current statistics
+        self.vpn_label.text = f"VPN Status: {self.stats_manager.get_vpn_status()}"
+        self.server_label.text = f"Server Status: {self.stats_manager.get_server_status()}"
+        self.filter_label.text = f"Filter Status: {self.stats_manager.get_filter_status()}"
+
+
+
+
 
 class Main_Screen(Screen):
     def __init__(self, **kwargs):
@@ -298,7 +324,7 @@ class Main_Screen(Screen):
         self.sm = ScreenManager()
         self.vpn_screen = VPN_Screen(name='vpn')
         self.filter_screen = Filter_Screen(name='filter')
-        self.stats_screen = Stats_Screen(name='stat')
+        self.stats_screen = statScreen(name='stat')
 
         # Add screens to screen manager
         self.sm.add_widget(self.stats_screen)
@@ -332,13 +358,17 @@ class Client_App(App):
         self.cloud_manager = Cloud_Manager()
         self.vpn_manager = VPN_Manager()
         self.filter_manager = None
-        self.stats_manager = None
+        self.stats_manager = Stats_Manager()
         return
 
     def build(self):
         self.root_sm = ScreenManager(transition=NoTransition())
         login_screen = Login_Screen(name='login')
         main_screen = Main_Screen(name='main')
+     
+
+
+
         # Add root screens
         self.root_sm.add_widget(login_screen)
         self.root_sm.add_widget(main_screen)
