@@ -42,7 +42,7 @@ TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metad
 IP=`curl http://169.254.169.254/latest/meta-data/public-ipv4 -H "X-aws-ec2-metadata-token: $TOKEN"`
 
 # Generate password
-password=$(openssl rand -base64 21)
+password=$(openssl rand -base64 30 | tr -d "/+")
 echo "$password" > /home/ubuntu/vpnkey.secret
 chmod 664 /home/ubuntu/vpnkey.secret
 
