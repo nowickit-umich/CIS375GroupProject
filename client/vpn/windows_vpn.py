@@ -24,8 +24,6 @@ lib.disconnect_vpn.argtypes = [ctypes.c_char_p]
 lib.disconnect_vpn.restype = ctypes.c_int
 lib.status.argtypes = [ctypes.c_char_p]
 lib.status.restype = ctypes.c_int
-lib.debug.argtypes = [ctypes.c_int, ctypes.c_char_p]
-lib.debug.restype = ctypes.c_int
 
 # Windows VPN Implementation
 class Windows_VPN(VPN_Interface):
@@ -97,7 +95,7 @@ class Windows_VPN(VPN_Interface):
         except Exception as e:
             logger.error(f"VPN Disconnect Error: {e}")
             return -1
-        
+
     def status(self, profile_name): # Get status of profile using profile name
         try:
             ret = lib.status(profile_name.encode('utf-8'))

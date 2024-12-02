@@ -1,5 +1,4 @@
-import asyncio
-import subprocess
+import time
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ class Cloud_Manager():
         self.server_key_name = "CIS375VPNKEY"
         self.cloud = None
         return
-    
+
     # setup cloud interface and validate credentials
     def setup(self, credentials):
         cloud_name = credentials[0]
@@ -45,20 +44,18 @@ class Cloud_Manager():
         logger.debug("Cloud Manager Setup Complete")
         self.is_ready = True
         return True
-    
+
     # Server status: initializing -> ok 
-    async def monitor_server(self):
-        if self.is_monitored:
-            return
-        self.is_monitored = True
-        while self.is_ready and self.server_id is not None:
+    def monitor_server(self):
+        while True:
+            time.sleep(3)
+            if not self.is_ready or self.server_id is None:
+                continue
+            logger.debug("CLOUD MONITOR LOOP")
             try:
-                self.server_status = await asyncio.to_thread(self.cloud.get_status, self.api_key, self.server_id, self.server_location)
+                self.server_status = self.cloud.get_status(self.api_key, self.server_id, self.server_location)
             except Exception as e:
                 logger.error(f"Server Monitoring Error: {e}")
-            await asyncio.sleep(3)
-        self.is_monitored = False
-        return
 
     def create_server(self):
         key = self.cloud.create_ssh_key(self.server_key_name, self.api_key, self.server_location)

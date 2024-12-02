@@ -20,6 +20,7 @@ from filter_manager import Filter_Manager
 import os
 import asyncio
 import logging
+from threading import Thread
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -214,6 +215,39 @@ class Login_Screen(Screen):
         logger.info("Successfully read credentials from file")
         return
 
+class Status_Widget(GridLayout):
+    '''
+    Description: 
+    '''
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.cols=2
+        self.rows=5
+        self.spacing=10
+        label_width = dp(120)
+        label_height = dp(30)
+        self.server_status = Label(text="Offline", size_hint=(None,None), height=label_height)
+        self.server_ip = Label(text="", size_hint=(None,None), height=label_height)
+        self.server_latency = Label(text="", size_hint=(None,None), height=label_height)
+        self.vpn_status = Label(text="Disconnected", size_hint=(None,None), height=label_height)
+        self.vpn_speed = Label(text="", size_hint=(None,None), height=label_height)
+
+        self.add_widget(Label(text="Server Status:", size_hint=(None,None), height=label_height,
+                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        self.add_widget(self.server_status)
+        self.add_widget(Label(text="Server IP:", size_hint=(None,None), height=label_height,
+                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        self.add_widget(self.server_ip)
+        self.add_widget(Label(text="Latency:", size_hint=(None,None), height=label_height,
+                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        self.add_widget(self.server_latency)
+        self.add_widget(Label(text="VPN Status:", size_hint=(None,None), height=label_height,
+                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        self.add_widget(self.vpn_status)
+        self.add_widget(Label(text="VPN Speed:", size_hint=(None,None), height=label_height,
+                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        self.add_widget(self.vpn_speed)
+
 class VPN_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -222,10 +256,11 @@ class VPN_Screen(Screen):
         self.vpn_manager = App.get_running_app().vpn_manager
         self.cloud_manager = App.get_running_app().cloud_manager
 
-        # Server Status Display test
-        server_status = BoxLayout(orientation="vertical", padding=20, spacing=10)
-        self.status_label = Label(text=f"Server Status: {self.cloud_manager.server_status}", font_size=20)
-        server_status.add_widget(self.status_label)
+        layout = BoxLayout(orientation="vertical", padding=20, spacing=10)
+
+        # Server Status Display
+        self.status = Status_Widget()
+        layout.add_widget(self.status)
 
         # Server Location Selector
         self.server_location_selector = Spinner(
@@ -236,45 +271,55 @@ class VPN_Screen(Screen):
             height=44
         )
         self.server_location_selector.bind(text=self.on_location_select)
-        server_status.add_widget(self.server_location_selector)
+        layout.add_widget(self.server_location_selector)
 
         # Connect/Disconnect Button
         self.connect_button = Button(text="Initializing...", size_hint=(1, None), height=50)
-        server_status.add_widget(self.connect_button)
-        self.add_widget(server_status)
+        layout.add_widget(self.connect_button)
+        self.add_widget(layout)
         return
-    
+
     def on_location_select(self, instance, text=None):
         self.cloud_manager.server_location = self.server_location_selector.text
 
     # reads status to UI
     def update(self, dt=0):
-        #TODO I think there is a better way to do this
-        if self.cloud_manager.is_ready and not self.cloud_manager.is_monitored:
-            asyncio.create_task(self.cloud_manager.monitor_server())
-        if self.vpn_manager.is_ready and not self.vpn_manager.is_monitored:
-            asyncio.create_task(self.vpn_manager.monitor_connection())
-
         # Update status
-        self.status_label.text = f"Server Status: {self.cloud_manager.server_status}\nIP: {self.cloud_manager.server_ip}"
+        prev_status = self.status.server_status.text
+        self.status.server_status.text = self.cloud_manager.server_status
+        if self.cloud_manager.server_ip != None:
+            self.status.server_ip.text = self.cloud_manager.server_ip
+        if self.vpn_manager.is_connected:
+            self.status.vpn_status.text = "Connected"
+        else:
+            self.status.vpn_status.text = "Disconnected"
+
         # Update button text
         if self.cloud_manager.server_status == "Offline":
+            logger.debug("VPN Screen Update: Offline")
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
             App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
-            self.connect_button.disabled = False
             self.connect_button.text = "Start Server"
+            self.connect_button.background_color = (0,0,1)
             self.connect_button.on_press = lambda: asyncio.create_task(self.on_create_server())
-        #if self.cloud_manager.server_status == "pending":
-        #    self.connect_button.disabled = True
-        elif self.cloud_manager.server_status == "ok":
+        elif self.cloud_manager.server_status == 'Starting...':
+            logger.debug("VPN Screen Update: Starting")
+            self.connect_button.disabled = True
+        elif self.cloud_manager.server_status == "Running":
+            if(prev_status != self.status.server_status.text):
+                self.connect_button.disabled = False
             if self.vpn_manager.is_connected:
+                logger.debug("VPN Screen Update: Connected")
                 self.connect_button.text = "Disconnect VPN"
                 self.connect_button.on_press = lambda: asyncio.create_task(self.on_disconnect())
-                self.connect_button.disabled = False
+                App.get_running_app().root_sm.get_screen('main').filter_button.disabled = False
+                App.get_running_app().root_sm.get_screen('main').stats_button.disabled = False
             else:
+                logger.debug("VPN Screen Update: Disconnected")
                 self.connect_button.text = "Connect VPN"
                 self.connect_button.on_press = lambda: asyncio.create_task(self.on_connect())
-                self.connect_button.disabled = False
+                App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
+                App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
         return
     
     async def on_connect(self):
@@ -283,13 +328,21 @@ class VPN_Screen(Screen):
             await asyncio.to_thread(self.vpn_manager.connect, self.cloud_manager.server_ip)
         except Exception as e:
             logger.error(f"VPN Connect error: {str(e)}")
+        Clock.schedule_once(lambda x:setattr(self.status.vpn_status, 'text', "Connected"))
+        Clock.schedule_once(lambda x:setattr(self.connect_button, 'text', "Disconnect VPN"))
+        Clock.schedule_once(lambda x:setattr(self.connect_button, 'background_color', (0,1,0)))
+        Clock.schedule_once(lambda x:setattr(self.connect_button, 'disabled', False))
     
     async def on_disconnect(self):
-        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
+        Clock.schedule_once(lambda x:setattr(self.connect_button, 'disabled', True))
         try:
             await asyncio.to_thread(self.vpn_manager.disconnect)
         except Exception as e:
-            logger.error(f"VPN Disconnect error: {str(e)}")    
+            logger.error(f"VPN Disconnect error: {str(e)}")
+        Clock.schedule_once(lambda x:setattr(self.status.vpn_status, 'text', "Disconnected"))
+        Clock.schedule_once(lambda x:setattr(self.connect_button, 'text', "Connect VPN"))
+        Clock.schedule_once(lambda x:setattr(self.connect_button, 'background_color', (1,0,0)))
+        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', False))
 
     async def on_create_server(self):
         Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
@@ -298,20 +351,19 @@ class VPN_Screen(Screen):
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
         except Exception as e:
-            logger.error(f"Create server error: {str(e)}")        
+            logger.error(f"Create server error: {str(e)}")
 
     def on_pre_enter(self, *args):
         # Update location selector
-        self.server_location_selector.text = self.cloud_manager.locations[0]
-        self.server_location_selector.values = self.cloud_manager.locations
+        if(self.server_location_selector.text == "None"):
+            self.server_location_selector.text = self.cloud_manager.locations[0]
+            self.server_location_selector.values = self.cloud_manager.locations
         # Add update loop
         self.update()
-        self.event_loop = Clock.schedule_interval(self.update, 1)
-        # start monitoring status of vpn and cloud
-           
+        self.update_loop = Clock.schedule_interval(self.update, 1)
+
     def on_leave(self, *args):
-        Clock.unschedule(self.event_loop)
-        self.cloud_manager.is_ready = False
+        Clock.unschedule(self.update_loop)
         return
     
 class Filter_Screen(Screen):
@@ -388,6 +440,10 @@ class Client_App(App):
         self.vpn_manager = VPN_Manager()
         self.filter_manager = None
         self.stats_manager = Stats_Manager()
+        self.server_monitor = Thread(target=self.cloud_manager.monitor_server, daemon=True)
+        self.server_monitor.start()
+        self.vpn_monitor = Thread(target=self.vpn_manager.monitor_connection, daemon=True)
+        self.vpn_monitor.start()
         return
 
     def build(self):
@@ -407,7 +463,5 @@ class Client_App(App):
         # delete cloud resources TODO
         pass
 
-
 if __name__ == '__main__':
     asyncio.run(Client_App().async_run(async_lib='asyncio'))
-

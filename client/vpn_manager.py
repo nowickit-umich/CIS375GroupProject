@@ -5,6 +5,7 @@ import asyncio
 import time
 import logging
 logger = logging.getLogger(__name__)
+logging.getLogger('paramiko').setLevel(logging.ERROR)
 
 class VPN_Manager():
     def __init__(self):
@@ -22,7 +23,6 @@ class VPN_Manager():
         else:
             print("ERROR: Platform ", platform.system(), " not supported")
             quit()
-        pass
 
     def get_vpn_keys(self, server_ip):
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
@@ -36,32 +36,27 @@ class VPN_Manager():
         ssh.close()
         logger.info("Successfully retrieved server keys")
         return
-    
-    async def monitor_connection(self):
-        if self.is_monitored or not self.is_ready:
-            return
-        self.is_monitored = True
-        while self.is_ready:
+
+    def monitor_connection(self):
+        while True:
+            time.sleep(3)
+            if not self.is_ready:
+                continue
             try:
-                result = await asyncio.to_thread(self.vpn.status, self.profile_name)
+                result = self.vpn.status(self.profile_name)
                 if result == 0:
                     self.is_connected = True
                 else:
                     self.is_connected = False
             except Exception as e:
                 logger.error(f"Error monitoring vpn connection: {e}")
-            await asyncio.sleep(3)
-        self.is_monitored = False
-        return
 
     def connect(self, server_address):
         self.get_vpn_keys(server_address)
-        time.sleep(0.1)
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/cert.pem")
         self.vpn.install_cert(path)
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.vpn.create_profile(self.profile_name, server_address, self.pbk_path)
-        time.sleep(0.1)
         file = open("data/vpnkey.secret")
         password = file.readline().strip()
         self.vpn.connect(self.profile_name, self.username, password, self.pbk_path)

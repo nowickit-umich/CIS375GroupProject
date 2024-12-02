@@ -7,10 +7,10 @@ logger = logging.getLogger(__name__)
 logging.getLogger('botocore').setLevel(logging.ERROR)
 logging.getLogger('boto3').setLevel(logging.ERROR)
 logging.getLogger('urllib3').setLevel(logging.ERROR)
- 
 
 ID_KEY = "CIS375VPN"
 ID_VALUE = "delete"
+DEFAULT_REGION = "us-east-2"
 
 class AwsInterface(CloudInterface):
     def create_session(self, api_key, region):
@@ -217,7 +217,8 @@ class AwsInterface(CloudInterface):
                 return "Instance not found or terminated."
             status = response["InstanceStatuses"][0]["InstanceStatus"]["Status"]
             logger.info(f"Instance {server_id} status: {status}.")
-            return status
+            status_map = {'not-applicable':'Offline', 'ok':'Running', 'initializing':'Starting...', 'impaired':'Unknown', 'insufficient-data':'Unknown'}
+            return status_map[status]
         except be.ClientError as e:
             error_message = e.response['Error']['Message']
             logger.error(f"ClientError while retrieving status for instance {server_id}: {error_message}")
@@ -227,6 +228,18 @@ class AwsInterface(CloudInterface):
             return f"Error: {str(e)}"
 
     def test_key(self, api_key):
+        '''
+        Description: Verifies that the given API key is valid.
+
+        param api_key: list containing the access key string followed by the secret key string.
+        return: Return true if the api key is valid, else return false.
+        '''
+        if len(api_key) != 2:
+            logger.error("Invalid API key provided.")
+            return False
+        if not isinstance(api_key[0], str) or not isinstance(api_key[1], str):
+            logger.error("Invalid API key provided.")
+            return False
         session = boto3.Session(
             aws_access_key_id=api_key[0],
             aws_secret_access_key=api_key[1],
@@ -246,11 +259,23 @@ class AwsInterface(CloudInterface):
                 raise e
 
     def get_locations(self, api_key):
+        '''
+        Description: retrieves a list of available server locations. 
+
+        param api_key: list containing the access key string followed by the secret key string.
+        return: list of valid location strings.
+        '''
+        if len(api_key) != 2:
+            logger.error("Invalid API key provided.")
+            raise ValueError("Invalid API key")
+        if not isinstance(api_key[0], str) or not isinstance(api_key[1], str):
+            logger.error("Invalid API key provided.")
+            raise ValueError("Invalid API key")
         session = boto3.Session(
             aws_access_key_id=api_key[0],
             aws_secret_access_key=api_key[1],
         )
-        client = session.client('ec2', region_name="us-east-1")
+        client = session.client('ec2', region_name=DEFAULT_REGION)
         try:
             response = client.describe_regions(AllRegions=False, DryRun=False)
             locations = [region["RegionName"] for region in response["Regions"]]

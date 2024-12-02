@@ -20,13 +20,13 @@ class Filter_Manager:
             self.block_list.append(list)
         except Exception as e:
             print(f"Error adding block list: {e}")
-            
+
     def delete_block_list(self, list): # Delete a list from the list of block lists
         try:
             self.block_list.remove(list)
         except Exception as e:
             print(f"Error deleting block list: {e}")
-    
+
     def send_update(self): # Send all enabled block lists to the server
 
         enabled_lists = [] # Loop over all lists, and get only enabled lists

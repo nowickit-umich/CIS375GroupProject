@@ -5,8 +5,10 @@ static int get_conn_by_name(char* name, HRASCONN &handle) {
     // Get size needed for connection buffer
     DWORD size = 0;
     DWORD num_con = 0;
+    // Retrieve buffer size
     DWORD result = RasEnumConnectionsA(NULL, &size, &num_con);
     if (result == ERROR_SUCCESS){
+        // No connections
         handle = nullptr;
         return 0;
     }
@@ -153,12 +155,17 @@ int disconnect_vpn(char* profileName) {
     return 0;
 }
 
+// return: 0 = connected. 1 = disconnected
 int status(char* profileName) {
     HRASCONN connection;
     DWORD result = get_conn_by_name(profileName, connection);
     if (result != 0 ) {
-        std::cerr << "Failed find profile. Error:" << result << std::endl;
+        std::cerr << "Failed to find profile. Error:" << result << std::endl;
         return -1;
+    }
+    if (connection == nullptr){
+        // No connections
+        return 1;
     }
 
     RASCONNSTATUSA status;

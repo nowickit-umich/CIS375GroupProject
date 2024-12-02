@@ -18,16 +18,53 @@ if not cloud_type or not access or not secret:
     os.remove("data/credentials.secret")
     print("Invalid Credentials.")
     quit()
+api_key = [access, secret]
 
 cloud = AwsInterface()
 
-region = 'us-east-2'
-ssh = cloud.create_ssh_key("TESTKEY", [access, secret], region)
-server = cloud.create_server("TESTKEY", [access, secret], region)
-print(f"Created server {server}")
-time.sleep(10)
-res = cloud.get_status([access, secret], server["server_id"], region)
-print(res)
+print('----- TESTING: test_key() -----')
+# test_key()
+#valid api key
+ret = cloud.test_key(api_key)
+assert(ret == True)
+#invalid api key
+# Empty key
+ret = cloud.test_key([])
+assert(ret == False)
+#invalid Type
+ret = cloud.test_key([1, 2])
+assert(ret == False)
+#invalid length
+ret = cloud.test_key(['abc', 'xyz', '123'])
+assert(ret == False)
+#invalid key
+ret = cloud.test_key(['abc', 'xyz'])
+assert(ret == False)
 
-'''{'InstanceStatuses': [{'AvailabilityZone': 'us-east-2b', 'InstanceId': 'i-0d38d7e7798d79306', 'InstanceState': {'Code': 16, 'Name': 'running'}, 'InstanceStatus': {'Details': [{'Name': 'reachability', 'Status': 'initializing'}], 'Status': 'initializing'}, 'SystemStatus': {'Details': [{'Name': 'reachability', 'Status': 'initializing'}], 'Status': 'initializing'}}], 'ResponseMetadata': {'RequestId': '4d4c2e32-3b9b-45f0-bd84-0ac6402656fe', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amzn-requestid': '4d4c2e32-3b9b-45f0-bd84-0ac6402656fe', 'cache-control': 'no-cache, no-store', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'content-type': 'text/xml;charset=UTF-8', 'content-length': '758', 'date': 'Sun, 24 Nov 2024 10:50:01 GMT', 'server': 'AmazonEC2'}, 'RetryAttempts': 0}}'''
+print('----- TESTING: get_locations() -----')
+# get_locations()
+#valid key
+ret = cloud.get_locations(api_key)
+assert(isinstance(ret, list))
+print("Retrieved Locations:", ret)
+#empty key
+try:
+    ret = cloud.get_locations([])
+except ValueError as e:
+    assert(e == "Invalid API key")
+
+print('----- TESTING: create_ssh_key() -----')
+# create_ssh_key()
+
+print('----- TESTING: create_server() -----')
+# create_server()
+
+print('----- TESTING: get_status() -----')
+# get_status()
+#valid api key
+ret = cloud.get_status()
+
+print('----- TESTING: delete_server() -----')
+# delete_server()
+
 
