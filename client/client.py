@@ -370,7 +370,67 @@ class Filter_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.add_widget(Label(text='This is the Filter configuration Screen'))
+        layout = FloatLayout()
+        #self.add_widget(CheckBox(color = (0,0,0), size_hint=(None, None), size=(dp(20), dp(20))))
+
+        #read from a file to create a few filters and checkboxes
+
+        # get list of file from server, file contain list of names
+
+        background_image = Image(source="images/Earth2.png", allow_stretch=True, keep_ratio=False,
+                                 size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
+        layout.add_widget(background_image)
+
+        # read text names from file
+
+        filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.01, "y":.5}, spacing = 10)
+
+        self.addfilter(filter_layout)
+
+        layout.add_widget(filter_layout)
+
+        self.add_widget(layout)
+
+        # read number of lines in file, add that many labels and checkboxes, each checkbox will either connect or disconnect filter
+    def addfilter(self,filter_layout):
+        try:
+            file = open("data/blocklist", "r")
+            lines = file.readlines()
+        except Exception as e:
+            print(e)
+            print("Unable to load blocklist\n")
+            return
+
+
+        for line in lines[:20]:
+            # Display up to 20 filters
+            row = BoxLayout(orientation = "horizontal", size_hint_y = None, height = 40)
+            label = Label(text=line.strip(),  halign = "left", valign = "middle", color = (0,0,0))
+            label.bind(size=label.setter("text_size"))
+            checkbox = CheckBox(size_hint_x=None, width = 40, color = (0,0,0))
+
+            checkbox.bind(
+                active=lambda instance, value, line=line.strip(): self.on_checkbox_active(instance, value, line))
+
+            row.add_widget(label)
+            row.add_widget(checkbox)
+            filter_layout.add_widget(row)
+
+        #close file?
+
+
+
+        #self.add_widget(Label(color = (0,0,0), text='This is the Filter configuration Screen'))
+
+    def on_checkbox_active(self, checkbox, value, line):
+        if value:
+            print(f"Checkbox selected for line: {line}")
+            #self.filter_manager.add_block_list(line)
+            #not sure what function to call here
+        else:
+            print(f"Checkbox deselected for line: {line}")
+
+            #self.filter_manager.delete_block_list
 
 class Stats_Screen(Screen):
     def __init__(self, **kwargs):
