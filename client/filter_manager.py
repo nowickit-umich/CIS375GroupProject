@@ -1,64 +1,60 @@
 import paramiko
+import os
 
-# Filter_Manager class intended to add, delete, enable, disable, and send block lists to a server, the block lists are saved in this format:
-# sample_list = {
-#    'enabled': True,
-#    'domain_names': [
-#        {'name': 'www.google.com', 'block_mode': 'single_domain'},
-#        {'name': 'www.youtube.com', 'block_mode': 'all_subdomains'}
-#    ]
-#}
-
-class Filter_Manager:
+class FilterManager:
     def __init__(self):
-        self.block_list = [] # List of dictionaries containing individual block lists with an 'enabled' key and 'domain_names' key 
+        self.block_list = [] #list of block lists, containing name and enabled/disabled status
         self.server_host = 'localhost'  
-        self.server_port = 44444
 
-    def add_block_list(self, list): # Add a list to the list of block lists
-        try:
-            self.block_list.append(list)
-        except Exception as e:
-            print(f"Error adding block list: {e}")
+    def get_block_lists(self):
 
-    def delete_block_list(self, list): # Delete a list from the list of block lists
-        try:
-            self.block_list.remove(list)
-        except Exception as e:
-            print(f"Error deleting block list: {e}")
+        if os.path.exists('data/block/'): #check if path exists, if so, loop through directory and append all lists to block_list, disabled by default
+            for list_name in os.listdir('data/block/'):
+                    self.block_list.append({"name": list_name, "enabled": False})
+        else:
+            print("Error: block list path not found")
 
-    def send_update(self): # Send all enabled block lists to the server
 
-        enabled_lists = [] # Loop over all lists, and get only enabled lists
+    def enable_list(self, list_name):
+        
+        for list in self.block_list: #iterate through block_list, if list_name is found, enable it, else, print error
+            if list['name'] == list_name:
+                list['enabled'] = True
+                print(f"Enabled block list: {list_name}")
+                return
+        print(f"Error: block list {list_name} not found")
+
+    def disable_list(self, list_name): #iterate through block_list, if list_name is found, disable it, else, print error
+
+        for list in self.block_list:
+            if list['name'] == list_name:
+                list['enabled'] = False
+                print(f"Disabled block list: {list_name}")
+                return
+        print(f"Error: block list {list_name} not found")
+
+
+    def send_update(self):
+
+        enabled_lists = [] #create list containing only enabled lists
         for list in self.block_list:
             if(list['enabled'] == True):
                 enabled_lists.append(list)
-        
-        with open('enabled_lists.txt', 'w') as f: # Loop over every enabled list and add an entry in the text file for each domain found in the list based on the specified block mode
-            for list in enabled_lists:
-                for domain in list['domain_names']:
-                    domain_name = domain['name']
-                    block_mode = domain['block_mode']
-
-                    if block_mode == 'single_domain':
-                        blocked_domain = f"address={domain_name}/"
-                    else:  
-                        blocked_domain = f"address=/{domain_name}/"
-
-                    f.write(blocked_domain + '\n')
 
         try:
-            
             key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            
+
             ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
             sftp = ssh.open_sftp()
-            
-            sftp_file_path = "/etc/dnsmasq.d/enabled_lists.txt"
-            sftp.put('enabled_lists.txt', sftp_file_path)
-            
+
+            for list in enabled_lists: #looping through enabled lists, copy the list and send to remote spot in server
+                local_path = 'data/block/' + list['name']
+                remote_path = '/etc/block/' + list['name']
+
+                sftp.put(local_path, remote_path)
+
             sftp.close()
             ssh.close()
 
@@ -66,20 +62,4 @@ class Filter_Manager:
 
         except Exception as e:
             print(f"Error sending update: {e}")
-
-    
-    def enable(self, list): # Enable list from list of block lists
-        try:
-            list['enabled'] = True
-
-        except Exception as e:
-            print(f"Error enabling block list: {e}")
-
-    
-    def disable(self, list): # Disable list from list of block lists
-        try:
-            list['enabled'] = False
-
-        except Exception as e:
-            print(f"Error disabling block list: {e}")
 
