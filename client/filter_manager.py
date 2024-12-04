@@ -73,4 +73,23 @@ class FilterManager:
 
         except Exception as e:
             print(f"Error sending update: {e}")
+    
+    def get_list(self):
+
+        key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
+        sftp = ssh.open_sftp()
+
+        lists = sftp.listdir_attr('/etc/block/')
+        for list in lists:
+            if list.st_size == 0:
+                print(f"{list.filename}: Disabled")
+            else:
+                print(f"{list.filename}: Enabled")
+
+        sftp.close()
+        ssh.close()
 
