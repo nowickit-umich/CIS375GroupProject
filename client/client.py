@@ -1,11 +1,17 @@
-# i still need to import the main branch to add some of the other ui details
-#filter should work the same, let me know if there is some issue
-#i messed around with this branch a bit so some of the other features might not work correctly in other screens
+#messed around with this branch a bit so some of the other features might not work correctly in other screens
+
+#there are a lot of print functions that dont need to be here, they are just there for testing purposes
+
+#there are two different ways that are implemented for the enable and disable filter functions
+#one is in the checkbox active method and another is in the sendupdate function in filterscreen
+#cant get the filter manager functions to work since the class in the file needs a server address and i can't get it to compile
+#the selected filters don't print or send in a specific order, for some reason it is random
+#not sure if it matters what order the blocklist is being sent as long as correct lists are sent
 
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
 from statistics_manager import Stats_Manager
-from filter_manager import Filter_Manager
+from filter_manager import FilterManager
 
 import os
 import asyncio
@@ -349,7 +355,13 @@ class Filter_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.selected_filters = set()  # Store the selected filters
+
+        #self.filter_manager = App.get_running_app().filter_manager
+        #not sure above line is needed
+
         layout = FloatLayout()
+
         #self.add_widget(CheckBox(color = (0,0,0), size_hint=(None, None), size=(dp(20), dp(20))))
 
         #read from a file to create a few filters and checkboxes
@@ -368,49 +380,112 @@ class Filter_Screen(Screen):
 
         layout.add_widget(filter_layout)
 
+        sendupdatebutton = Button(text="Send Updated Blocklist", size_hint=(.4, .1), pos_hint={"x": .3, "y": .05})
+        sendupdatebutton.bind(on_press=self.sendfilterupdate)
+        layout.add_widget(sendupdatebutton)
+
         self.add_widget(layout)
 
-        # read number of lines in file, add that many labels and checkboxes, each checkbox will either connect or disconnect filter
+        #add blocklist name instead of file contents
+        #remove file header just display name
+
     def addfilter(self,filter_layout):
+        """ #this was for reading the data in the blocklist file, don't need this comment section anymore
         try:
+
             file = open("data/blocklist", "r")
+
             lines = file.readlines()
         except Exception as e:
             print(e)
             print("Unable to load blocklist\n")
             return
+        """
 
+        #reading from "data" directory
+        try:
+            lines = os.listdir("data")
+
+        except Exception as e:
+            print(e)
+            print("Unable to load blocklist\n")
+            return
 
         for line in lines[:20]:
-            # Display up to 20 filters
-            row = BoxLayout(orientation = "horizontal", size_hint_y = None, height = 40)
-            label = Label(text=line.strip(),  halign = "left", valign = "middle", color = (0,0,0))
-            label.bind(size=label.setter("text_size"))
-            checkbox = CheckBox(size_hint_x=None, width = 40, color = (0,0,0))
+            #only displays files with .block in their name
+            #
+            if line.endswith(".block"):
+                textline = os.path.splitext(line)[0]
+                # Display up to 20 filters
+                row = BoxLayout(orientation = "horizontal", size_hint_y = None, height = 40)
+                label = Label(text=textline.strip(),  halign = "left", valign = "middle", color = (0,0,0))
+                label.bind(size=label.setter("text_size"))
+                checkbox = CheckBox(size_hint_x=None, width = 40, color = (0,0,0))
 
-            checkbox.bind(
-                active=lambda instance, value, line=line.strip(): self.on_checkbox_active(instance, value, line))
-
-            row.add_widget(label)
-            row.add_widget(checkbox)
-            filter_layout.add_widget(row)
+                checkbox.bind(
+                    active=lambda instance, value, line=line.strip(): self.on_checkbox_active(instance, value, line))
+                    #might need to be line.strip() instead of textline, since the filter manager will need the .block extension
+                row.add_widget(label)
+                row.add_widget(checkbox)
+                filter_layout.add_widget(row)
 
         #close file?
-
-
-
-        #self.add_widget(Label(color = (0,0,0), text='This is the Filter configuration Screen'))
 
     def on_checkbox_active(self, checkbox, value, line):
         if value:
             print(f"Checkbox selected for line: {line}")
-            #self.filter_manager.add_block_list(line)
-            #not sure what function to call here
+
+            self.selected_filters.add(line)  # Add to selected filters
+
+            #self.filter_manager.enable_list(line)
+
+            #right now this method sends the .block extension as well as the name,
+            #if that needs to change, change checkbox.bind line to line=textline
+
         else:
             print(f"Checkbox deselected for line: {line}")
 
-            #self.filter_manager.delete_block_list
+            self.selected_filters.discard(line)  # Remove from selected filters
 
+            #self.filter_manager.disable_list(line)
+
+
+    def sendfilterupdate(self, instance):
+
+        #if checkbox of blocklist or blocklist 2 is enabled, send it to the enable_list
+
+        print("list sent")
+        print("Selected filters:", list(self.selected_filters))
+
+        try:
+            lines = os.listdir("data")
+
+        except Exception as e:
+            print(e)
+            print("Unable to load blocklist\n")
+            return
+
+        for line in lines[:20]:
+            line = line.strip() #this will have .block extension
+            #self.filter_manager.disable_list(line) #uncomment
+
+            #disabling every blocklist so blocklists not selected arent enabled
+            #definetly a better way to do this instead of just reading the file again
+            #maybe create another list with full name of .block files and call each line with the disable_list(line)
+
+
+        #should only send selected filters to enable_list
+        for filters in list(self.selected_filters):
+            #self.filter_manager.enable_list(line)
+            print(filters)
+
+        #self.filter_manager.send_update() #uncomment
+
+    def on_pre_enter(self, *args):
+
+        #self.filter_manager.get_list() #uncomment
+
+        print("on_pre_enter FilterScreen Test") #just to show it is called
 
 
 class Stats_Screen(Screen):
@@ -459,7 +534,10 @@ class Client_App(App):
         super().__init__(**kwargs)
         self.cloud_manager = Cloud_Manager()
         self.vpn_manager = VPN_Manager()
-        self.filter_manager = None
+
+        self.filter_manager = None #FilterManager()
+        #not sure how to initialize this since there needs to be a server address in FilterManager class
+
         self.stats_manager = None
         # Add manager update loops
         Clock.schedule_interval(call_async(self.cloud_manager.update), 1)
