@@ -75,7 +75,8 @@ class FilterManager:
             print(f"Error sending update: {e}")
     
     def get_list(self):
-
+        
+        current_block_list = []
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -86,10 +87,13 @@ class FilterManager:
         lists = sftp.listdir_attr('/etc/block/')
         for list in lists:
             if list.st_size == 0:
+                current_block_list.append({"name": list.filename, "enabled": False})
                 print(f"{list.filename}: Disabled")
             else:
+                current_block_list.append({"name": list.filename, "enabled": True})
                 print(f"{list.filename}: Enabled")
-
+                
+        self.block_list = current_block_list
         sftp.close()
         ssh.close()
 
