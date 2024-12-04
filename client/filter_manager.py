@@ -2,9 +2,9 @@ import paramiko
 import os
 
 class FilterManager:
-    def __init__(self):
+    def __init__(self, server_address):
         self.block_list = [] #list of block lists, containing name and enabled/disabled status
-        self.server_host = 'localhost'  
+        self.server_host = server_address #server address passed as parameter when instance of filter manager created
 
     def get_block_lists(self):
 
