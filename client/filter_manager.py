@@ -37,9 +37,12 @@ class FilterManager:
     def send_update(self):
 
         enabled_lists = [] #create list containing only enabled lists
+        disabled_lists = [] #create list containing only disabled lists
         for list in self.block_list:
             if(list['enabled'] == True):
                 enabled_lists.append(list)
+            elif (list['enabled'] == False):
+                disabled_lists.append(list)
 
         try:
             key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
@@ -51,6 +54,14 @@ class FilterManager:
 
             for list in enabled_lists: #looping through enabled lists, copy the list and send to remote spot in server
                 local_path = 'data/block/' + list['name']
+                remote_path = '/etc/block/' + list['name']
+
+                sftp.put(local_path, remote_path)
+
+            for list in disabled_lists: #looping through disabled lists, copy an empty list, and send to the server
+                with open('data/block/empty.txt', 'w') as empty_file:
+                    pass
+                local_path = 'data/block/empty.txt'
                 remote_path = '/etc/block/' + list['name']
 
                 sftp.put(local_path, remote_path)
