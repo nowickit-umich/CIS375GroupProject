@@ -367,72 +367,78 @@ class VPN_Screen(Screen):
     def on_leave(self, *args):
         Clock.unschedule(self.update_loop)
         return
-    
+
 class Filter_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.filter_manager = Filter_Manager()
+        self.selected_filters = set()  # Store the selected filters
 
+        # main layout
         layout = FloatLayout()
-        #self.add_widget(CheckBox(color = (0,0,0), size_hint=(None, None), size=(dp(20), dp(20))))
 
-        #read from a file to create a few filters and checkboxes
+        # Add background image
+        # background_image = Image(source="images/Earth2.png", allow_stretch=True, keep_ratio=False,
+        #                          size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
+        # layout.add_widget(background_image)
 
-        # get list of file from server, file contain list of names
+        # layout for filter checkbox
+        self.filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.5, "y":.5}, spacing = 10)
 
-        background_image = Image(source="images/Earth2.png", allow_stretch=True, keep_ratio=False,
-                                 size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
-        layout.add_widget(background_image)
+        layout.add_widget(Label(text="[b]Configure Block Lists[/b]", markup=True, font_size=dp(18), halign='left', size_hint=(0.5, 0.1), pos_hint={"x":0.25, "y":0.85}))
 
-        # read text names from file
+        layout.add_widget(self.filter_layout)
 
-        filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.01, "y":.5}, spacing = 10)
-
-        self.addfilter(filter_layout)
-
-        layout.add_widget(filter_layout)
+        send_update_button = Button(text="Update Blocklists", size_hint=(.4, .1), pos_hint={"x": .3, "y": .05})
+        send_update_button.bind(on_press=lambda x:asyncio.create_task(self.on_send_update()))
+        layout.add_widget(send_update_button)
 
         self.add_widget(layout)
 
-        # read number of lines in file, add that many labels and checkboxes, each checkbox will either connect or disconnect filter
-    def addfilter(self,filter_layout):
-        try:
-            file = open("data/blocklist", "r")
-            lines = file.readlines()
-        except Exception as e:
-            print(e)
-            print("Unable to load blocklist\n")
-            return
-
-
-        for line in lines[:20]:
-            # Display up to 20 filters
-            row = BoxLayout(orientation = "horizontal", size_hint_y = None, height = 40)
-            label = Label(text=line.strip(),  halign = "left", valign = "middle", color = (0,0,0))
+    def add_checkboxes(self, filter_layout):
+        '''
+        Desc:
+        '''
+        for list in self.filter_manager.block_list:
+            name = list['name'].removesuffix(".block")
+            row = BoxLayout(orientation = "horizontal", size_hint = (None,None), height = 40)
+            label = Label(text=name,  halign = "right", valign = "middle", color = (1,1,1))
             label.bind(size=label.setter("text_size"))
-            checkbox = CheckBox(size_hint_x=None, width = 40, color = (0,0,0))
+            
+            checkbox = CheckBox(size_hint_x=None, width = 40, color = (1,1,1))
 
             checkbox.bind(
-                active=lambda instance, value, line=line.strip(): self.on_checkbox_active(instance, value, line))
-
+                active=lambda instance, value, name=name: self.on_checkbox_active(instance, value, name)
+            )
             row.add_widget(label)
             row.add_widget(checkbox)
+
             filter_layout.add_widget(row)
 
-        #close file?
-
-
-
-        #self.add_widget(Label(color = (0,0,0), text='This is the Filter configuration Screen'))
-
-    def on_checkbox_active(self, checkbox, value, line):
+    def on_checkbox_active(self, checkbox, value, name):
         if value:
-            print(f"Checkbox selected for line: {line}")
-            #self.filter_manager.add_block_list(line)
-            #not sure what function to call here
+            self.filter_manager.enable_list(name)
         else:
-            print(f"Checkbox deselected for line: {line}")
+            self.filter_manager.disable_list(name)
 
-            #self.filter_manager.delete_block_list
+    async def on_send_update(self):
+        # move to thread because send_update blocks
+        try:
+            await asyncio.to_thread(self.filter_manager.send_update)
+        except Exception as e:
+            logger.error(f"Send filter update error: {str(e)}")
+        return
+
+    def on_pre_enter(self, *args):
+        # get server address
+        addr = App.get_running_app().cloud_manager.server_ip
+        # set address of filter manager
+        self.filter_manager.server_host = addr
+        # update block list - TODO async, this blocks the UI
+        self.filter_manager.get_list()
+        # Add the checkbox widgets
+        self.add_checkboxes(self.filter_layout)
+        logger.debug("Filter Screen Initialized")
 
 class Stats_Screen(Screen):
     def __init__(self, **kwargs):
@@ -493,6 +499,8 @@ class Main_Screen(Screen):
     def on_pre_enter(self, *args):
         # Trigger on_enter update for vpn screen when main screen is activated
         self.sm.current = 'vpn'
+        #DEBUG
+        self.sm.current = 'filter'
 
 class Client_App(App):
 
@@ -500,7 +508,6 @@ class Client_App(App):
         super().__init__(**kwargs)
         self.cloud_manager = Cloud_Manager()
         self.vpn_manager = VPN_Manager()
-        self.filter_manager = None
         self.stats_manager = Stats_Manager()
         self.server_monitor = Thread(target=self.cloud_manager.monitor_server, daemon=True)
         self.server_monitor.start()
@@ -516,6 +523,10 @@ class Client_App(App):
         # Add root screens
         self.root_sm.add_widget(login_screen)
         self.root_sm.add_widget(main_screen)
+
+        #DEBUG
+        self.root_sm.current = 'main'
+
         return self.root_sm
     
     def on_stop(self):

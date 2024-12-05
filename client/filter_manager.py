@@ -1,8 +1,10 @@
 import paramiko
 import os
+import logging
+logger = logging.getLogger(__name__)
 
-class FilterManager:
-    def __init__(self, server_address):
+class Filter_Manager:
+    def __init__(self, server_address="localhost"):
         self.block_list = [] #list of block lists, containing name and enabled/disabled status
         self.server_host = server_address #server address passed as parameter when instance of filter manager created
 
@@ -10,29 +12,31 @@ class FilterManager:
 
         if os.path.exists('data/block/'): #check if path exists, if so, loop through directory and append all lists to block_list, disabled by default
             for list_name in os.listdir('data/block/'):
+                # verify extension
+                if list_name.endswith(".block"):
+                    # add list
                     self.block_list.append({"name": list_name, "enabled": False})
+                    logger.debug(f"Found Client block list {list_name}")
         else:
-            print("Error: block list path not found")
-
+            logger.error("Block list path not found")
 
     def enable_list(self, list_name):
         
         for list in self.block_list: #iterate through block_list, if list_name is found, enable it, else, print error
             if list['name'] == list_name:
                 list['enabled'] = True
-                print(f"Enabled block list: {list_name}")
+                logger.info(f"Enabled block list: {list_name}")
                 return
-        print(f"Error: block list {list_name} not found")
+        logger.error(f"Block list {list_name} not found")
 
     def disable_list(self, list_name): #iterate through block_list, if list_name is found, disable it, else, print error
 
         for list in self.block_list:
             if list['name'] == list_name:
                 list['enabled'] = False
-                print(f"Disabled block list: {list_name}")
+                logger.info(f"Disabled block list: {list_name}")
                 return
-        print(f"Error: block list {list_name} not found")
-
+        logger.error(f"Block list {list_name} not found")
 
     def send_update(self):
 
@@ -54,28 +58,27 @@ class FilterManager:
 
             for list in enabled_lists: #looping through enabled lists, copy the list and send to remote spot in server
                 local_path = 'data/block/' + list['name']
-                remote_path = '/etc/block/' + list['name']
+                remote_path = '/etc/dnsmasq.d/' + list['name']
 
                 sftp.put(local_path, remote_path)
 
             for list in disabled_lists: #looping through disabled lists, copy an empty list, and send to the server
-                with open('data/block/empty.txt', 'w') as empty_file:
-                    pass
-                local_path = 'data/block/empty.txt'
-                remote_path = '/etc/block/' + list['name']
+                local_path = 'data/block/empty.block'
+                remote_path = '/etc/dnsmasq.d/' + list['name']
 
                 sftp.put(local_path, remote_path)
 
             sftp.close()
             ssh.close()
 
-            print("Enabled block lists successfully sent to the server.")
+            logger.info("Enabled block lists successfully sent to the server.")
 
         except Exception as e:
-            print(f"Error sending update: {e}")
+            logger.error(f"Error sending update: {e}")
     
     def get_list(self):
-        
+        self.block_list = [{'name':"test.block", 'enabled':True}, {'name':"test2.block", 'enabled':False}, {'name':"test3.block",'enabled':False}]
+        return
         current_block_list = []
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
         ssh = paramiko.SSHClient()
@@ -83,15 +86,22 @@ class FilterManager:
 
         ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
         sftp = ssh.open_sftp()
+        try:
+            lists = sftp.listdir_attr('/etc/dnsmasq.d/')
+        except Exception as e:
+            logger.error(f"Unable to get server block lists {e}")
 
-        lists = sftp.listdir_attr('/etc/block/')
         for list in lists:
+            # skip non block files
+            if not list.filename.endswith(".block"):
+                logger.debug(f"Skipping file {list.filename}")
+                continue
             if list.st_size == 0:
                 current_block_list.append({"name": list.filename, "enabled": False})
-                print(f"{list.filename}: Disabled")
+                logger.debug(f"{list.filename}: Disabled")
             else:
                 current_block_list.append({"name": list.filename, "enabled": True})
-                print(f"{list.filename}: Enabled")
+                logger.debug(f"{list.filename}: Enabled")
                 
         self.block_list = current_block_list
         sftp.close()
