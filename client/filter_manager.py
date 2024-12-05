@@ -5,11 +5,13 @@ logger = logging.getLogger(__name__)
 
 class Filter_Manager:
     def __init__(self, server_address="localhost"):
-        self.block_list = [] #list of block lists, containing name and enabled/disabled status
+        self.block_list = [] #list of block lists = dicts containing name and enabled/disabled status
         self.server_host = server_address #server address passed as parameter when instance of filter manager created
+        self.is_updated = False
+        # initialize block lists
+        self.get_block_lists()
 
     def get_block_lists(self):
-
         if os.path.exists('data/block/'): #check if path exists, if so, loop through directory and append all lists to block_list, disabled by default
             for list_name in os.listdir('data/block/'):
                 # verify extension
@@ -21,7 +23,6 @@ class Filter_Manager:
             logger.error("Block list path not found")
 
     def enable_list(self, list_name):
-        
         for list in self.block_list: #iterate through block_list, if list_name is found, enable it, else, print error
             if list['name'] == list_name:
                 list['enabled'] = True
@@ -30,7 +31,6 @@ class Filter_Manager:
         logger.error(f"Block list {list_name} not found")
 
     def disable_list(self, list_name): #iterate through block_list, if list_name is found, disable it, else, print error
-
         for list in self.block_list:
             if list['name'] == list_name:
                 list['enabled'] = False
@@ -63,7 +63,7 @@ class Filter_Manager:
                 sftp.put(local_path, remote_path)
 
             for list in disabled_lists: #looping through disabled lists, copy an empty list, and send to the server
-                local_path = 'data/block/empty.block'
+                local_path = 'data/block/empty.txt'
                 remote_path = '/etc/dnsmasq.d/' + list['name']
 
                 sftp.put(local_path, remote_path)
@@ -76,9 +76,12 @@ class Filter_Manager:
         except Exception as e:
             logger.error(f"Error sending update: {e}")
     
-    def get_list(self):
-        self.block_list = [{'name':"test.block", 'enabled':True}, {'name':"test2.block", 'enabled':False}, {'name':"test3.block",'enabled':False}]
-        return
+    def get_server_lists(self):
+        if not self.is_updated:
+            # ensure server files are consistent with client
+            self.send_update()
+            self.is_updated = True
+            return
         current_block_list = []
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
         ssh = paramiko.SSHClient()

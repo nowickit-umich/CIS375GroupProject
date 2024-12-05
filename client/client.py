@@ -111,7 +111,7 @@ class Login_Screen(Screen):
         updates the login screen message, and then passes the input to the 
         _check_credentials function to asyncronously validate.
 
-        param b: instance of the button
+        param b: instance of the calling button; unused
         return: None
         '''
         access = self.input_access.text
@@ -399,6 +399,7 @@ class Filter_Screen(Screen):
         '''
         Desc:
         '''
+        filter_layout.clear_widgets()
         for list in self.filter_manager.block_list:
             name = list['name'].removesuffix(".block")
             row = BoxLayout(orientation = "horizontal", size_hint = (None,None), height = 40)
@@ -435,7 +436,7 @@ class Filter_Screen(Screen):
         # set address of filter manager
         self.filter_manager.server_host = addr
         # update block list - TODO async, this blocks the UI
-        self.filter_manager.get_list()
+        self.filter_manager.get_server_lists()
         # Add the checkbox widgets
         self.add_checkboxes(self.filter_layout)
         logger.debug("Filter Screen Initialized")
@@ -499,8 +500,6 @@ class Main_Screen(Screen):
     def on_pre_enter(self, *args):
         # Trigger on_enter update for vpn screen when main screen is activated
         self.sm.current = 'vpn'
-        #DEBUG
-        self.sm.current = 'filter'
 
 class Client_App(App):
 
@@ -523,9 +522,6 @@ class Client_App(App):
         # Add root screens
         self.root_sm.add_widget(login_screen)
         self.root_sm.add_widget(main_screen)
-
-        #DEBUG
-        self.root_sm.current = 'main'
 
         return self.root_sm
     
