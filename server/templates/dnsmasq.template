@@ -7,4 +7,3 @@ cache-size=0
 no-resolv
 domain-needed
 bogus-priv
-conf-dir=/etc/dnsmasq.d/,*.block
