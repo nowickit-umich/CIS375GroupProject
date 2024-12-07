@@ -39,6 +39,7 @@ cp $SPATH/config/nftables.conf /etc/nftables.conf
 
 #Configure sshd
 echo "PermitRootLogin yes" > /etc/ssh/sshd_config.d/root.conf
+systemctl restart ssh.socket
 
 #Get server Public IP
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 120"`
