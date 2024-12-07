@@ -37,10 +37,6 @@ sed -i -e "s/%SERVER_INTERFACE%/$SERVER_INTERFACE/g" $SPATH/config/nftables.conf
 cp $SPATH/config/nftables.conf /etc/nftables.conf
 /usr/sbin/nft -f /etc/nftables.conf
 
-#Configure sshd
-echo "PermitRootLogin yes" > /etc/ssh/sshd_config.d/root.conf
-systemctl restart ssh.socket
-
 #Get server Public IP
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 120"`
 IP=`curl http://169.254.169.254/latest/meta-data/public-ipv4 -H "X-aws-ec2-metadata-token: $TOKEN"`
