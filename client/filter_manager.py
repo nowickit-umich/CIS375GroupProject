@@ -24,7 +24,7 @@ class Filter_Manager:
 
     def enable_list(self, list_name):
         for list in self.block_list: #iterate through block_list, if list_name is found, enable it, else, print error
-            if list['name'] == list_name:
+            if list['name'] == list_name + ".block":
                 list['enabled'] = True
                 logger.info(f"Enabled block list: {list_name}")
                 return
@@ -32,7 +32,7 @@ class Filter_Manager:
 
     def disable_list(self, list_name): #iterate through block_list, if list_name is found, disable it, else, print error
         for list in self.block_list:
-            if list['name'] == list_name:
+            if list['name'] == list_name + ".block":
                 list['enabled'] = False
                 logger.info(f"Disabled block list: {list_name}")
                 return
@@ -55,18 +55,24 @@ class Filter_Manager:
 
             ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
             sftp = ssh.open_sftp()
+            try:
+                sftp.stat('/home/ubuntu/dnsmasq/')
+            except:
+                sftp.mkdir('/home/ubuntu/dnsmasq/')
 
             for list in enabled_lists: #looping through enabled lists, copy the list and send to remote spot in server
                 local_path = 'data/block/' + list['name']
-                remote_path = '/etc/dnsmasq.d/' + list['name']
+                remote_path = '/home/ubuntu/dnsmasq/' + list['name']
 
                 sftp.put(local_path, remote_path)
 
             for list in disabled_lists: #looping through disabled lists, copy an empty list, and send to the server
                 local_path = 'data/block/empty.txt'
-                remote_path = '/etc/dnsmasq.d/' + list['name']
+                remote_path = '/home/ubuntu/dnsmasq/' + list['name']
 
                 sftp.put(local_path, remote_path)
+            
+            sftp.put('data/block/empty.txt', '/home/ubuntu/dnsmasq/flag')
 
             sftp.close()
             ssh.close()
@@ -90,7 +96,7 @@ class Filter_Manager:
         ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
         sftp = ssh.open_sftp()
         try:
-            lists = sftp.listdir_attr('/etc/dnsmasq.d/')
+            lists = sftp.listdir_attr('/home/ubuntu/dnsmasq/')
         except Exception as e:
             logger.error(f"Unable to get server block lists {e}")
 

@@ -13,6 +13,7 @@ from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
+from kivy.uix.modalview import ModalView
 
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
@@ -27,11 +28,49 @@ from threading import Thread
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-class Login_Screen(Screen):
+class Loading_Overlay(ModalView):
+    '''
+    Description: Displays an animated loading icon and blocks the screen. 
+    NOTE: must be called with Clock.schedule_once to ensure it is placed on top of the screen
+    '''
+    def __init__(self, message="", **kwargs):
+        super().__init__(**kwargs)
+        self.background_color = (0, 0, 0, 0.6)
+        self.size_hint = (1, 1)
+        self.auto_dismiss = False
+        layout = FloatLayout()
+        layout.add_widget(
+            Image(
+                source="data/images/load.zip", 
+                anim_delay = 1/60,
+                anim_loop = 0,
+                size_hint = (0.15, 0.15),
+                pos_hint = {"center_x": 0.5, "center_y": 0.5}
+            )
+        )
+        layout.add_widget(
+            Label(
+                text=message,
+                pos_hint = {"center_x": 0.5, "center_y": 0.3}
+            )
+        )
+        self.add_widget(layout)
 
+    def on_touch_down(self, touch):
+        '''
+        Description: Ensures that the overlay intercepts all touch events 
+        '''
+        return True
+
+class Login_Screen(Screen):
+    '''
+    Description: Displays a login screen which allows the user to select the cloud type and enter their API credentials
+    '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         font_size = dp(16)
+
+        self.loading = Loading_Overlay("Validating Credentials...")
 
         # Define UI 
         self.cloud_types = ["AWS", "Google Cloud", "Azure"]
@@ -103,8 +142,8 @@ class Login_Screen(Screen):
         self.add_widget(bottom)
 
         # Check for saved credentials
-        self.read_credentials()    
-    
+        self.read_credentials()
+
     def login(self, b):
         '''
         Description: Function called from the login button. Performs basic input validation,
@@ -139,6 +178,7 @@ class Login_Screen(Screen):
         '''
         app = App.get_running_app()
         is_valid = False
+        Clock.schedule_once(self.loading.open, 0)
         try:
             logger.debug("Checking Credentials")
             is_valid = await asyncio.to_thread(app.cloud_manager.setup, credentials) 
@@ -148,6 +188,7 @@ class Login_Screen(Screen):
             logger.error(f"Error checking credentials: {e}")
         # schedule update status to execute
         Clock.schedule_once(lambda x: self.update_status(is_valid, credentials))
+        Clock.schedule_once(self.loading.dismiss, 0)
         return
         
     def update_status(self, is_valid, credentials):
@@ -263,6 +304,10 @@ class VPN_Screen(Screen):
         # Server Status Display
         self.status = Status_Widget()
         layout.add_widget(self.status)
+        self.connect_button_lock = False
+        self.connect_button = Button(text="Connect", size_hint=(1, None), height=50)
+        #self.connect_button.disabled = True
+        layout.add_widget(self.connect_button)
 
         # Server Location Selector
         self.server_location_selector = Spinner(
@@ -276,8 +321,9 @@ class VPN_Screen(Screen):
         layout.add_widget(self.server_location_selector)
 
         # Connect/Disconnect Button
-        self.connect_button = Button(text="Initializing...", size_hint=(1, None), height=50)
-        layout.add_widget(self.connect_button)
+        self.server_button_lock = False
+        self.server_button = Button(text="Start Server", size_hint=(1, None), height=50)
+        layout.add_widget(self.server_button)
         self.add_widget(layout)
         return
 
@@ -296,64 +342,88 @@ class VPN_Screen(Screen):
         else:
             self.status.vpn_status.text = "Disconnected"
 
-        # Update button text
-        if self.cloud_manager.server_status == "Offline":
-            logger.debug("VPN Screen Update: Offline")
+        if self.status.server_status.text == "Offline":
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
             App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
-            self.connect_button.text = "Start Server"
-            self.connect_button.background_color = (0,0,1)
-            self.connect_button.on_press = lambda: asyncio.create_task(self.on_create_server())
-        elif self.cloud_manager.server_status == 'Starting...':
-            logger.debug("VPN Screen Update: Starting")
             self.connect_button.disabled = True
-        elif self.cloud_manager.server_status == "Running":
-            if(prev_status != self.status.server_status.text):
+            if not self.server_button_lock:
+                self.server_location_selector.disabled = False
+            self.server_button.text = "Start Server"
+            self.server_button.background_color = (0,0.8,0)
+            self.server_button.on_press = lambda: asyncio.create_task(self.on_create_server())
+        elif self.status.server_status.text == "Starting":
+            App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
+            App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
+            self.connect_button.disabled = True
+            self.server_button.disabled = True
+            self.server_location_selector.disabled = True
+            self.server_button.text = "Server Starting"
+        elif self.status.server_status.text == "Running":
+            if not self.connect_button_lock:
                 self.connect_button.disabled = False
-            if self.vpn_manager.is_connected:
-                logger.debug("VPN Screen Update: Connected")
-                self.connect_button.text = "Disconnect VPN"
-                self.connect_button.on_press = lambda: asyncio.create_task(self.on_disconnect())
-                App.get_running_app().root_sm.get_screen('main').filter_button.disabled = False
-                App.get_running_app().root_sm.get_screen('main').stats_button.disabled = False
-            else:
-                logger.debug("VPN Screen Update: Disconnected")
-                self.connect_button.text = "Connect VPN"
-                self.connect_button.on_press = lambda: asyncio.create_task(self.on_connect())
-                App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
-                App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
+            self.server_button.text = "Stop Server"
+            self.server_button.background_color = (1,0,0)
+            self.server_button.on_press = lambda: asyncio.create_task(self.on_delete_server())
+            if not self.server_button_lock:
+                self.server_button.disabled = False
+        
+        if self.status.vpn_status.text == "Connected":
+            App.get_running_app().root_sm.get_screen('main').filter_button.disabled = False
+            App.get_running_app().root_sm.get_screen('main').stats_button.disabled = False
+            self.connect_button.text = "Disconnect VPN"
+            self.connect_button.background_color = (1,0,0)
+            self.connect_button.on_press = lambda: asyncio.create_task(self.on_disconnect())
+        else:
+            App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
+            App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
+            self.connect_button.text = "Connect VPN"
+            self.connect_button.background_color = (0,1,0)
+            self.connect_button.on_press = lambda: asyncio.create_task(self.on_connect())
+
         return
     
     async def on_connect(self):
+        Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", True))
         Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
         try:
             await asyncio.to_thread(self.vpn_manager.connect, self.cloud_manager.server_ip)
+            await asyncio.sleep(0)
         except Exception as e:
             logger.error(f"VPN Connect error: {str(e)}")
-        Clock.schedule_once(lambda x:setattr(self.status.vpn_status, 'text', "Connected"))
-        Clock.schedule_once(lambda x:setattr(self.connect_button, 'text', "Disconnect VPN"))
-        Clock.schedule_once(lambda x:setattr(self.connect_button, 'background_color', (0,1,0)))
-        Clock.schedule_once(lambda x:setattr(self.connect_button, 'disabled', False))
+        Clock.schedule_once(lambda x: setattr(self.status.vpn_status, "text", "Connected"))
+        Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", False))
     
     async def on_disconnect(self):
+        Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", True))
         Clock.schedule_once(lambda x:setattr(self.connect_button, 'disabled', True))
         try:
             await asyncio.to_thread(self.vpn_manager.disconnect)
         except Exception as e:
             logger.error(f"VPN Disconnect error: {str(e)}")
-        Clock.schedule_once(lambda x:setattr(self.status.vpn_status, 'text', "Disconnected"))
-        Clock.schedule_once(lambda x:setattr(self.connect_button, 'text', "Connect VPN"))
-        Clock.schedule_once(lambda x:setattr(self.connect_button, 'background_color', (1,0,0)))
-        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', False))
+        Clock.schedule_once(lambda x: setattr(self.status.vpn_status, "text", "Disconnected"))
+        Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", False))
 
     async def on_create_server(self):
+        Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
         Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
-        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
+        Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
         Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', True))
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
         except Exception as e:
             logger.error(f"Create server error: {str(e)}")
+        Clock.schedule_once(lambda x: setattr(self, "server_button_lock", False))
+
+    async def on_delete_server(self):
+        Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
+        Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
+        try:
+            if self.status.vpn_status.text == "Connected":
+                await asyncio.to_thread(self.on_disconnect) # TODO error here
+            await asyncio.to_thread(self.cloud_manager.delete_server)
+        except Exception as e:
+            logger.error(f"Delete server error: {str(e)}")
+        Clock.schedule_once(lambda x: setattr(self, "server_button_lock", False))
 
     def on_pre_enter(self, *args):
         # Update location selector
@@ -376,11 +446,6 @@ class Filter_Screen(Screen):
 
         # main layout
         layout = FloatLayout()
-
-        # Add background image
-        # background_image = Image(source="images/Earth2.png", allow_stretch=True, keep_ratio=False,
-        #                          size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
-        # layout.add_widget(background_image)
 
         # layout for filter checkbox
         self.filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.5, "y":.5}, spacing = 10)
@@ -432,14 +497,17 @@ class Filter_Screen(Screen):
 
     def on_pre_enter(self, *args):
         # get server address
-        addr = App.get_running_app().cloud_manager.server_ip
+        addr = App.get_running_app().cloud_manager.server_private_ip
         # set address of filter manager
         self.filter_manager.server_host = addr
-        # update block list - TODO async, this blocks the UI
+        # update block list - TODO async, this blocks the UI - needs loading screen
         self.filter_manager.get_server_lists()
         # Add the checkbox widgets
         self.add_checkboxes(self.filter_layout)
         logger.debug("Filter Screen Initialized")
+
+    def on_leave(self, *args):
+        self.filter_manager.is_updated = False
 
 class Stats_Screen(Screen):
     def __init__(self, **kwargs):
