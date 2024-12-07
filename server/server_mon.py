@@ -28,6 +28,7 @@ def main():
             count -= 1
         if count < 0:
             os.system("shutdown now -P")
+        print(f"Count Remaining: {count}")
         time.sleep(60//freq)
 
 if __name__ == '__main__':
