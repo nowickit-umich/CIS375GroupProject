@@ -6,7 +6,7 @@ import os
 # Return true if there is an active VPN connection
 def check_connection():
     try:
-        result = os.system('sudo swanctl -l | grep -o "ESTABLISHED" | wc -l')
+        result = os.system('swanctl -l | grep -o "ESTABLISHED" | wc -l')
         if result != 0:
             return True
     except:
@@ -27,7 +27,8 @@ def main():
         else:
             count -= 1
         if count < 0:
-            os.system("sudo shutdown now -P")
+            os.system("shutdown now -P")
+        print(f"Count Remaining: {count}")
         time.sleep(60//freq)
 
 if __name__ == '__main__':

@@ -62,13 +62,21 @@ openssl req -x509 -newkey rsa:4096 -keyout $SPATH/key.pem -out $SPATH/cert.pem -
 mv $SPATH/key.pem /etc/swanctl/private/key.pem
 mv $SPATH/cert.pem /etc/swanctl/x509/cert.pem
 
-# start server_cmd service
-cp $SPATH/server_cmd.py /usr/bin/server_cmd.py
-chmod 755 /usr/bin/server_cmd.py
-cp $SPATH/systemd/server_cmd.service /etc/systemd/system/
+# start server_mon service
+cp $SPATH/server_mon.py /usr/bin/server_mon.py
+chmod 755 /usr/bin/server_mon.py
+cp $SPATH/systemd/server_mon.service /etc/systemd/system/
 systemctl daemon-reload
-systemctl start server_cmd
-systemctl enable server_cmd
+systemctl start server_mon
+systemctl enable server_mon
+
+# start server_dns service
+cp $SPATH/server_dns.py /usr/bin/server_dns.py
+chmod 755 /usr/bin/server_dns.py
+cp $SPATH/systemd/server_dns.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl start server_dns
+systemctl enable server_dns
 
 #Start VPN
 systemctl restart strongswan

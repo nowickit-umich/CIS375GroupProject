@@ -165,7 +165,7 @@ class AwsInterface(CloudInterface):
             logger.info(f"Instance {instance.id} created.")
             instance.wait_until_running()
             instance.reload()
-            return {'InstanceId': instance.id, 'PublicIp': instance.public_ip_address}
+            return {'InstanceId': instance.id, 'PublicIp': instance.public_ip_address, 'PrivateIp': instance.private_ip_address}
         except be.ClientError as e:
             logger.error(f"Failed to create EC2 instance: {e.response['Error']['Message']}")
             raise
@@ -217,7 +217,7 @@ class AwsInterface(CloudInterface):
                 return "Instance not found or terminated."
             status = response["InstanceStatuses"][0]["InstanceStatus"]["Status"]
             logger.info(f"Instance {server_id} status: {status}.")
-            status_map = {'not-applicable':'Offline', 'ok':'Running', 'initializing':'Starting...', 'impaired':'Unknown', 'insufficient-data':'Unknown'}
+            status_map = {'not-applicable':'Offline', 'ok':'Running', 'initializing':'Starting', 'impaired':'Unknown', 'insufficient-data':'Unknown'}
             return status_map[status]
         except be.ClientError as e:
             error_message = e.response['Error']['Message']

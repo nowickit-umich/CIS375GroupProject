@@ -8,9 +8,9 @@ class Cloud_Manager():
         self.locations = ["None"]
         self.api_key = []
         self.is_ready = False
-        self.is_monitored = False
         self.server_id = None
         self.server_ip = None
+        self.server_private_ip = None
         self.server_location = None
         self.server_status = "Offline"
         self.server_key_name = "CIS375VPNKEY"
@@ -51,7 +51,6 @@ class Cloud_Manager():
             time.sleep(3)
             if not self.is_ready or self.server_id is None:
                 continue
-            logger.debug("CLOUD MONITOR LOOP")
             try:
                 self.server_status = self.cloud.get_status(self.api_key, self.server_id, self.server_location)
             except Exception as e:
@@ -65,10 +64,14 @@ class Cloud_Manager():
         instance = self.cloud.create_server(self.server_key_name, self.api_key, self.server_location)
         self.server_id = instance["InstanceId"]
         self.server_ip = instance["PublicIp"]
+        self.server_private_ip = instance["PrivateIp"]
         return
 
     def delete_server(self):
-        self.cloud.delete_server()
+        self.cloud.delete_server(self.api_key, self.server_location, self.server_id)
+        self.server_id = None
+        self.server_ip = None
+        self.server_location = None
         return
 
     #return list of locations (strings)  
