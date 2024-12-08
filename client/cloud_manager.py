@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class Cloud_Manager():
     '''
-        Description: Manages the cloud including the interface of choice,  the server creation and deletion, and continuous status monitoring.
+        Description: Manages the cloud including the interface of choice,  the server creation and deletion, and periodic status monitoring.
     '''
     def __init__(self):
         self.locations = ["None"]
@@ -57,7 +57,7 @@ class Cloud_Manager():
     # Server status: initializing -> ok 
     def monitor_server(self):
         '''
-        Description: continuously monitors the status of the server, updating server_status
+        Description: periodically monitors the status of the server, updating server_status
 
         return: None
         '''
