@@ -19,6 +19,7 @@ from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
 from statistics_manager import Stats_Manager
 from filter_manager import Filter_Manager
+from observer import Observer
 
 import os
 import asyncio
@@ -258,12 +259,13 @@ class Login_Screen(Screen):
         logger.info("Successfully read credentials from file")
         return
 
-class Status_Widget(GridLayout):
+class Status_Widget(GridLayout, Observer):
     '''
     Description: Widget which contains all status information about the server and VPN connection.
     '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
         self.cols=2
         self.rows=5
         self.spacing=10
@@ -275,6 +277,7 @@ class Status_Widget(GridLayout):
         self.server_latency = Label(text="", size_hint=(None,None), height=label_height)
         self.vpn_status = Label(text="Disconnected", size_hint=(None,None), height=label_height)
         self.vpn_speed = Label(text="", size_hint=(None,None), height=label_height)
+        self.is_updated = True
 
         self.add_widget(Label(text="Server Status:", size_hint=(None,None), height=label_height,
                 width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
@@ -298,13 +301,16 @@ class Status_Widget(GridLayout):
         param cloud_manager: Cloud_Manager to get status from
         param vpn_manager: VPN_Manager to get status from
         '''
-        self.server_status.text = cloud_manager.server_status
-        if cloud_manager.server_ip != None:
-            self.server_ip.text = cloud_manager.server_ip
-        if vpn_manager.is_connected:
-            self.vpn_status.text = "Connected"
-        else:
-            self.vpn_status.text = "Disconnected"
+        if cloud_manager is not None:
+            self.server_status.text = cloud_manager.server_status
+            if cloud_manager.server_ip != None:
+                self.server_ip.text = cloud_manager.server_ip
+        if vpn_manager is not None:
+            if vpn_manager.is_connected:
+                self.vpn_status.text = "Connected"
+            else:
+                self.vpn_status.text = "Disconnected"
+        self.is_updated = True
 
 class VPN_Screen(Screen):
     '''
@@ -322,6 +328,10 @@ class VPN_Screen(Screen):
 
         # Server Status Display
         self.status = Status_Widget()
+        # register observers
+        self.cloud_manager.add_observer(self.status)
+        self.vpn_manager.add_observer(self.status)
+
         layout.add_widget(self.status)
         self.connect_button_lock = False
         self.connect_button = Button(text="Connect", size_hint=(1, None), height=50)
@@ -357,8 +367,8 @@ class VPN_Screen(Screen):
         Description: Updates the status display and update the UI elements based
         on the current status.
         '''
-        # Update status
-        self.status.update(self.cloud_manager, self.vpn_manager)
+        if not self.status.is_updated:
+            return
 
         # Update server button
         if self.status.server_status.text == "Offline":
@@ -385,6 +395,7 @@ class VPN_Screen(Screen):
             self.server_button.on_press = lambda: asyncio.create_task(self.on_delete_server())
             if not self.server_button_lock:
                 self.server_button.disabled = False
+        self.status.is_updated = False
         
         # Update vpn button
         if self.status.vpn_status.text == "Connected":

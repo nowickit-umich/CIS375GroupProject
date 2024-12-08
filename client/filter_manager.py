@@ -4,6 +4,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Filter_Manager:
+    '''
+    Description: Manages the filters  of the VPN server by maintaining a list across sessions, and allowing the ability to enable and disable them.
+    '''
     def __init__(self, server_address="localhost"):
         self.block_list = [] #list of block lists = dicts containing name and enabled/disabled status
         self.server_host = server_address #server address passed as parameter when instance of filter manager created
@@ -12,6 +15,11 @@ class Filter_Manager:
         self.get_block_lists()
 
     def get_block_lists(self):
+        '''
+        Description: Searches the block list directory(data/block/) and appends all block lists to block_list and sets them to disabled by default
+        
+        return: None
+        '''
         if os.path.exists('data/block/'): #check if path exists, if so, loop through directory and append all lists to block_list, disabled by default
             for list_name in os.listdir('data/block/'):
                 # verify extension
@@ -23,6 +31,12 @@ class Filter_Manager:
             logger.error("Block list path not found")
 
     def enable_list(self, list_name):
+        '''
+        Description: Searches block_list for the given list_name, and if it is found, enable it.
+
+        param list_name: a given list found in block_list
+        return: None
+        '''
         for list in self.block_list: #iterate through block_list, if list_name is found, enable it, else, print error
             if list['name'] == list_name + ".block":
                 list['enabled'] = True
@@ -30,8 +44,14 @@ class Filter_Manager:
                 return
         logger.error(f"Block list {list_name} not found")
 
-    def disable_list(self, list_name): #iterate through block_list, if list_name is found, disable it, else, print error
-        for list in self.block_list:
+    def disable_list(self, list_name): 
+        '''
+        Description: Searches block_list for the given list_name, and if it is found, disable it.
+
+        param list_name: a given list found in block_list
+        return: None
+        '''
+        for list in self.block_list:  #iterate through block_list, if list_name is found, disable it, else, print error
             if list['name'] == list_name + ".block":
                 list['enabled'] = False
                 logger.info(f"Disabled block list: {list_name}")
@@ -39,7 +59,11 @@ class Filter_Manager:
         logger.error(f"Block list {list_name} not found")
 
     def send_update(self):
+        '''
+        Description: Function used to pass enabled lists to the server, and passes empty files to the server for disabled lists.
 
+        return: None
+        '''
         enabled_lists = [] #create list containing only enabled lists
         disabled_lists = [] #create list containing only disabled lists
         for list in self.block_list:
@@ -84,6 +108,11 @@ class Filter_Manager:
             ssh.close()
     
     def get_server_lists(self):
+        '''
+        Description: Function used to get the current lists found in the server if they have been updated in the past.
+
+        return: None
+        '''
         if not self.is_updated:
             # ensure server files are consistent with client
             self.send_update()

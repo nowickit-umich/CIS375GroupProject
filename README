@@ -2,3 +2,21 @@ CIS 375 Group Project
 
 This application automatically deploys a VPN server on a cloud service provider (only AWS is currently supported).
 The application manages the VPN connection and allows the user to filter DNS traffic and view statistcs about their network usage. 
+
+
+
+Creating Access/Secret Key
+
+Log into AWS
+Go to IAM (Identity and Access Management) Dashboard
+Go to users tab on the left side of the screen, found between User Groups and Roles options under Access Management
+Create a new user, giving it a name and allowing access to AWS management console (not required)
+Set the permissions as "Attach Polcicies Directly", giving it one policy of AmazonEC2FullAccess, ignore permission boundaries
+Review and create the user
+Click on the user and press create access key on the right side of the summary box
+For Access key best practices & alternatives, select "Application running outside AWS"
+Add description tag (not required)
+The keys are now created, save them in a secure location, these will be used to log into the VPN program
+The secret key can not be seen again after exiting the tab
+Do not put the keys in a public spot or in code, as other people who have access to the key can use it to create servers, and can lead to excess charges on bank account
+The access key will be in the Access Token Box, while the Secret key will be used in the Secret Token box
