@@ -1,5 +1,5 @@
 [Unit]
-Description=VPN server command service
+Description=DNS filter update service
 After=network.target
 
 [Service]

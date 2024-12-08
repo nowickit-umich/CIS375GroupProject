@@ -1,7 +1,6 @@
 import platform
 import paramiko
 import os
-import asyncio
 import time
 import logging
 logger = logging.getLogger(__name__)
@@ -21,7 +20,7 @@ class VPN_Manager():
             from vpn.windows_vpn import Windows_VPN
             self.vpn = Windows_VPN()
         else:
-            print("ERROR: Platform ", platform.system(), " not supported")
+            logger.critical(f"ERROR: Platform {platform.system()} not supported")
             quit()
 
     def get_vpn_keys(self, server_ip):
