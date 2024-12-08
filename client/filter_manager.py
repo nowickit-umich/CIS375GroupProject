@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class Filter_Manager:
     '''
-        Description: Manages the filters  of the VPN server by maintaining a list across sessions, and allowing the ability to enable and disable them.
+    Description: Manages the filters  of the VPN server by maintaining a list across sessions, and allowing the ability to enable and disable them.
     '''
     def __init__(self, server_address="localhost"):
         self.block_list = [] #list of block lists = dicts containing name and enabled/disabled status
