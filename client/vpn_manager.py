@@ -7,6 +7,9 @@ logger = logging.getLogger(__name__)
 logging.getLogger('paramiko').setLevel(logging.ERROR)
 
 class VPN_Manager():
+    '''
+        Description: Manages the connection to the VPN, allowing for connecting, disconnecting, and monitoring of the VPN.
+    '''
     def __init__(self):
         self.is_ready = False
         self.is_monitored = False
@@ -24,6 +27,12 @@ class VPN_Manager():
             quit()
 
     def get_vpn_keys(self, server_ip):
+        '''
+        Description: gets the VPN keys from the server given a server_ip
+
+        param server_ip: IP address of server to connect to
+        return: None
+        '''
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -37,6 +46,11 @@ class VPN_Manager():
         return
 
     def monitor_connection(self):
+        '''
+        Description: periodically monitor the connection status of the VPN
+
+        return: None
+        '''
         while True:
             time.sleep(3)
             if not self.is_ready:
@@ -51,6 +65,12 @@ class VPN_Manager():
                 logger.error(f"Error monitoring vpn connection: {e}")
 
     def connect(self, server_address):
+        '''
+        Description: Connects to the VPN using the server_address
+
+        param server_address: Address of server to connect to
+        return: None
+        '''
         self.get_vpn_keys(server_address)
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/cert.pem")
         self.vpn.install_cert(path)
@@ -63,4 +83,9 @@ class VPN_Manager():
         return
     
     def disconnect(self):
+        '''
+        Description: Disconnects from the VPN
+
+        return: the status of the VPN disconnection(successful or unsuccessful)
+        '''
         return self.vpn.disconnect(self.profile_name)
