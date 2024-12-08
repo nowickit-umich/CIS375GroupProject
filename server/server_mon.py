@@ -7,7 +7,7 @@ import os
 def check_connection():
     try:
         result = os.system('swanctl -l | grep -o "ESTABLISHED" | wc -l')
-        if result != 0:
+        if result != "0":
             return True
     except:
         return False
@@ -28,7 +28,7 @@ def main():
             count -= 1
         if count < 0:
             os.system("shutdown now -P")
-        print(f"Count Remaining: {count}")
+        os.system(f"echo 'Count Remaining: {count}'")
         time.sleep(60//freq)
 
 if __name__ == '__main__':

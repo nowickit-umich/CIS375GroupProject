@@ -73,7 +73,6 @@ class Filter_Manager:
                 sftp.put(local_path, remote_path)
             
             sftp.put('data/block/empty.txt', '/home/ubuntu/dnsmasq/flag')
-
             sftp.close()
             ssh.close()
 
@@ -81,6 +80,8 @@ class Filter_Manager:
 
         except Exception as e:
             logger.error(f"Error sending update: {e}")
+            sftp.close()
+            ssh.close()
     
     def get_server_lists(self):
         if not self.is_updated:

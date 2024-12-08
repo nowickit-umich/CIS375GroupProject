@@ -72,6 +72,7 @@ class Cloud_Manager():
         self.server_id = None
         self.server_ip = None
         self.server_location = None
+        self.server_status = "Offline"
         return
 
     #return list of locations (strings)  

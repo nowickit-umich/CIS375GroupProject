@@ -260,7 +260,7 @@ class Login_Screen(Screen):
 
 class Status_Widget(GridLayout):
     '''
-    Description: 
+    Description: Widget which contains all status information about the server and VPN connection.
     '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -269,6 +269,7 @@ class Status_Widget(GridLayout):
         self.spacing=10
         label_width = dp(120)
         label_height = dp(30)
+
         self.server_status = Label(text="Offline", size_hint=(None,None), height=label_height)
         self.server_ip = Label(text="", size_hint=(None,None), height=label_height)
         self.server_latency = Label(text="", size_hint=(None,None), height=label_height)
@@ -290,6 +291,20 @@ class Status_Widget(GridLayout):
         self.add_widget(Label(text="VPN Speed:", size_hint=(None,None), height=label_height,
                 width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
         self.add_widget(self.vpn_speed)
+
+    def update(self, cloud_manager, vpn_manager):
+        '''
+        Description: Updates the contents of the status widget
+        param cloud_manager: Cloud_Manager to get status from
+        param vpn_manager: VPN_Manager to get status from
+        '''
+        self.server_status.text = cloud_manager.server_status
+        if cloud_manager.server_ip != None:
+            self.server_ip.text = cloud_manager.server_ip
+        if vpn_manager.is_connected:
+            self.vpn_status.text = "Connected"
+        else:
+            self.vpn_status.text = "Disconnected"
 
 class VPN_Screen(Screen):
     def __init__(self, **kwargs):
@@ -333,15 +348,9 @@ class VPN_Screen(Screen):
     # reads status to UI
     def update(self, dt=0):
         # Update status
-        prev_status = self.status.server_status.text
-        self.status.server_status.text = self.cloud_manager.server_status
-        if self.cloud_manager.server_ip != None:
-            self.status.server_ip.text = self.cloud_manager.server_ip
-        if self.vpn_manager.is_connected:
-            self.status.vpn_status.text = "Connected"
-        else:
-            self.status.vpn_status.text = "Disconnected"
+        self.status.update(self.cloud_manager, self.vpn_manager)
 
+        # Update server button
         if self.status.server_status.text == "Offline":
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
             App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
@@ -367,6 +376,7 @@ class VPN_Screen(Screen):
             if not self.server_button_lock:
                 self.server_button.disabled = False
         
+        # Update vpn button
         if self.status.vpn_status.text == "Connected":
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = False
             App.get_running_app().root_sm.get_screen('main').stats_button.disabled = False
@@ -390,7 +400,6 @@ class VPN_Screen(Screen):
             await asyncio.sleep(0)
         except Exception as e:
             logger.error(f"VPN Connect error: {str(e)}")
-        Clock.schedule_once(lambda x: setattr(self.status.vpn_status, "text", "Connected"))
         Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", False))
     
     async def on_disconnect(self):
@@ -400,7 +409,6 @@ class VPN_Screen(Screen):
             await asyncio.to_thread(self.vpn_manager.disconnect)
         except Exception as e:
             logger.error(f"VPN Disconnect error: {str(e)}")
-        Clock.schedule_once(lambda x: setattr(self.status.vpn_status, "text", "Disconnected"))
         Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", False))
 
     async def on_create_server(self):
@@ -471,7 +479,7 @@ class Filter_Screen(Screen):
             label = Label(text=name,  halign = "right", valign = "middle", color = (1,1,1))
             label.bind(size=label.setter("text_size"))
             
-            checkbox = CheckBox(size_hint_x=None, width = 40, color = (1,1,1))
+            checkbox = CheckBox(size_hint_x=None, width = 40, color = (1,1,1), active=list['enabled'])
 
             checkbox.bind(
                 active=lambda instance, value, name=name: self.on_checkbox_active(instance, value, name)
@@ -494,21 +502,28 @@ class Filter_Screen(Screen):
         except Exception as e:
             logger.error(f"Send filter update error: {str(e)}")
         return
+    
+    async def sync_list(self):
+        try:
+            await asyncio.to_thread(self.filter_manager.get_server_lists)
+            # Add the checkbox widgets
+            self.add_checkboxes(self.filter_layout)
+            self.load.dismiss()
+        except:
+            logger.error("Unable to get server filter lists")
 
     def on_pre_enter(self, *args):
+        self.load = Loading_Overlay("Getting Active Filters...")
+        self.load.open()
         # get server address
         addr = App.get_running_app().cloud_manager.server_private_ip
         # set address of filter manager
-        self.filter_manager.server_host = addr
-        # update block list - TODO async, this blocks the UI - needs loading screen
-        self.filter_manager.get_server_lists()
-        # Add the checkbox widgets
-        self.add_checkboxes(self.filter_layout)
+        if self.filter_manager.server_host != addr:
+            self.filter_manager.is_updated = False
+            self.filter_manager.server_host = addr
+        asyncio.create_task(self.sync_list())
         logger.debug("Filter Screen Initialized")
-
-    def on_leave(self, *args):
-        self.filter_manager.is_updated = False
-
+        
 class Stats_Screen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
