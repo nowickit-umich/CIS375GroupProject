@@ -3,11 +3,13 @@ import paramiko
 import os
 import time
 import logging
+from observer import Subject
 logger = logging.getLogger(__name__)
 logging.getLogger('paramiko').setLevel(logging.ERROR)
 
-class VPN_Manager():
+class VPN_Manager(Subject):
     def __init__(self):
+        super().__init__([])
         self.is_ready = False
         self.is_monitored = False
         self.is_connected = False
@@ -47,6 +49,7 @@ class VPN_Manager():
                     self.is_connected = True
                 else:
                     self.is_connected = False
+                self.notify(None, self)
             except Exception as e:
                 logger.error(f"Error monitoring vpn connection: {e}")
 

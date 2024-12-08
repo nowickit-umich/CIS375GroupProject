@@ -1,10 +1,12 @@
 import time
 import logging
+from observer import Observer, Subject
 
 logger = logging.getLogger(__name__)
 
-class Cloud_Manager():
+class Cloud_Manager(Subject):
     def __init__(self):
+        super().__init__([])
         self.locations = ["None"]
         self.api_key = []
         self.is_ready = False
@@ -53,6 +55,7 @@ class Cloud_Manager():
                 continue
             try:
                 self.server_status = self.cloud.get_status(self.api_key, self.server_id, self.server_location)
+                self.notify(self, None)
             except Exception as e:
                 logger.error(f"Server Monitoring Error: {e}")
 
