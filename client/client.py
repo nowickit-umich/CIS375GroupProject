@@ -307,6 +307,10 @@ class Status_Widget(GridLayout):
             self.vpn_status.text = "Disconnected"
 
 class VPN_Screen(Screen):
+    '''
+    Description: Displays the server status and VPN connection status. Contains buttons to allow
+    control of server and VPN connection.
+    '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -343,10 +347,16 @@ class VPN_Screen(Screen):
         return
 
     def on_location_select(self, instance, text=None):
+        '''
+        Description: Updates the cloud_manager location based on user input 
+        '''
         self.cloud_manager.server_location = self.server_location_selector.text
 
-    # reads status to UI
     def update(self, dt=0):
+        '''
+        Description: Updates the status display and update the UI elements based
+        on the current status.
+        '''
         # Update status
         self.status.update(self.cloud_manager, self.vpn_manager)
 
@@ -393,6 +403,9 @@ class VPN_Screen(Screen):
         return
     
     async def on_connect(self):
+        '''
+        Description: Asynchronously attempts to establish a VPN connection.
+        '''
         Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", True))
         Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
         try:
@@ -403,6 +416,9 @@ class VPN_Screen(Screen):
         Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", False))
     
     async def on_disconnect(self):
+        '''
+        Description: Asynchronously attempts to disconnect the VPN
+        '''
         Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", True))
         Clock.schedule_once(lambda x:setattr(self.connect_button, 'disabled', True))
         try:
@@ -412,6 +428,10 @@ class VPN_Screen(Screen):
         Clock.schedule_once(lambda x: setattr(self, "connect_button_lock", False))
 
     async def on_create_server(self):
+        '''
+        Description: Asynchronously attempts to create a new server in the currently 
+        selected location. 
+        '''
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
         Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
@@ -423,6 +443,9 @@ class VPN_Screen(Screen):
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", False))
 
     async def on_delete_server(self):
+        '''
+        Description: Asynchronously attempts to delete the running server. 
+        '''
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
         try:
@@ -457,20 +480,20 @@ class Filter_Screen(Screen):
 
         # layout for filter checkbox
         self.filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.5, "y":.5}, spacing = 10)
-
+        # Title
         layout.add_widget(Label(text="[b]Configure Block Lists[/b]", markup=True, font_size=dp(18), halign='left', size_hint=(0.5, 0.1), pos_hint={"x":0.25, "y":0.85}))
-
         layout.add_widget(self.filter_layout)
 
+        # update filter lists button
         send_update_button = Button(text="Update Blocklists", size_hint=(.4, .1), pos_hint={"x": .3, "y": .05})
         send_update_button.bind(on_press=lambda x:asyncio.create_task(self.on_send_update()))
         layout.add_widget(send_update_button)
-
+        # add main layout
         self.add_widget(layout)
 
     def add_checkboxes(self, filter_layout):
         '''
-        Desc:
+        Description: adds a checkbox widget for each block list in the filter_manager. 
         '''
         filter_layout.clear_widgets()
         for list in self.filter_manager.block_list:
@@ -550,6 +573,10 @@ class Stats_Screen(Screen):
         self.filter_label.text = f"Filter Status: {self.stats_manager.get_filter_status()}"
 
 class Main_Screen(Screen):
+    '''
+    Description: This screen is just a container for the menu bar. All other screens (except login) are within
+    this screens screen manager.
+    '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -585,7 +612,9 @@ class Main_Screen(Screen):
         self.sm.current = 'vpn'
 
 class Client_App(App):
-
+    '''
+    Description: Main client application
+    '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.cloud_manager = Cloud_Manager()
@@ -616,4 +645,5 @@ class Client_App(App):
         pass
 
 if __name__ == '__main__':
+    # Run the client app within asyncio
     asyncio.run(Client_App().async_run(async_lib='asyncio'))
