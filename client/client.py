@@ -303,14 +303,15 @@ class Status_Widget(GridLayout, Observer):
         '''
         if cloud_manager is not None:
             self.server_status.text = cloud_manager.server_status
-            if cloud_manager.server_ip != None:
-                self.server_ip.text = cloud_manager.server_ip
+            #if cloud_manager.server_ip != None:
+            self.server_ip.text = cloud_manager.server_ip
+            self.is_updated = True
         if vpn_manager is not None:
             if vpn_manager.is_connected:
                 self.vpn_status.text = "Connected"
             else:
                 self.vpn_status.text = "Disconnected"
-        self.is_updated = True
+            self.is_updated = True
 
 class VPN_Screen(Screen):
     '''
@@ -375,11 +376,11 @@ class VPN_Screen(Screen):
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
             App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
             self.connect_button.disabled = True
+            self.server_button.text = "Start Server"
+            self.server_button.background_color = (0,1,0)
+            self.server_button.on_press = lambda: asyncio.create_task(self.on_create_server())
             if not self.server_button_lock:
                 self.server_location_selector.disabled = False
-            self.server_button.text = "Start Server"
-            self.server_button.background_color = (0,0.8,0)
-            self.server_button.on_press = lambda: asyncio.create_task(self.on_create_server())
         elif self.status.server_status.text == "Starting":
             App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
             App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
@@ -444,7 +445,7 @@ class VPN_Screen(Screen):
         selected location. 
         '''
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
-        Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
+        #Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
         Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', True))
         try:
@@ -461,10 +462,11 @@ class VPN_Screen(Screen):
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
         try:
             if self.status.vpn_status.text == "Connected":
-                await asyncio.to_thread(self.on_disconnect) # TODO error here
+                await asyncio.to_thread(self.vpn_manager.disconnect)
             await asyncio.to_thread(self.cloud_manager.delete_server)
         except Exception as e:
             logger.error(f"Delete server error: {str(e)}")
+            Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', False))
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", False))
 
     def on_pre_enter(self, *args):

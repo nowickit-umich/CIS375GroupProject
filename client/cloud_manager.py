@@ -59,7 +59,7 @@ class Cloud_Manager(Subject):
     # Server status: initializing -> ok 
     def monitor_server(self):
         '''
-        Description: periodically monitors the status of the server, updating server_status
+        Description: periodically monitors the status of the server, updating server_status and notifying observers
 
         return: None
         '''
@@ -68,7 +68,10 @@ class Cloud_Manager(Subject):
             if not self.is_ready or self.server_id is None:
                 continue
             try:
-                self.server_status = self.cloud.get_status(self.api_key, self.server_id, self.server_location)
+                status = self.cloud.get_status(self.api_key, self.server_id, self.server_location)
+                if not self.is_ready:
+                    continue
+                self.server_status = status
                 self.notify(self, None)
             except Exception as e:
                 logger.error(f"Server Monitoring Error: {e}")
@@ -95,11 +98,13 @@ class Cloud_Manager(Subject):
 
         return: None
         '''
+        self.is_ready = False
         self.cloud.delete_server(self.api_key, self.server_location, self.server_id)
-        self.server_id = None
+        self.server_id = ""
         self.server_ip = None
         self.server_location = None
         self.server_status = "Offline"
+        self.is_ready = True
         return
 
     #return list of locations (strings)  

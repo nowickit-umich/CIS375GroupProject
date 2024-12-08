@@ -11,26 +11,26 @@ class CloudInterface(ABC):
     def delete_server():
         pass
 
-    #Start the server
-    @abstractmethod
-    def start_server():
-        pass
-
-    #Stop the server
-    @abstractmethod
-    def stop_server():
-        pass
-
-    #setup cloud enviornment
+    #return true if api_key is valid
     @abstractmethod
     def test_key(self, api_key):
         pass
 
-    #Remove all resources from the cloud service
+    #return the status of the server
+    @abstractmethod
+    def get_status(self, api_key):
+        pass
+
+    @abstractmethod
+    def create_ssh_key(self, api_key):
+        pass
+
+    #Remove all resources from the cloud service TODO
     @abstractmethod
     def terminate_cloud():
         pass
 
+    #Return a list of valid server locations
     @abstractmethod
     def get_locations(self, api_key):
         pass

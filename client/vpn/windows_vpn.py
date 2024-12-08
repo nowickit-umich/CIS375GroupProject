@@ -147,3 +147,8 @@ class Windows_VPN(VPN_Interface):
             logger.error(f"VPN Status Error: {e}")
             return -1
         
+    def delete_profile(self, profile_name):
+        '''
+        Description: Not required for the windows implementation. Profile is stored locally
+        '''
+        return

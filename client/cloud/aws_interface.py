@@ -204,6 +204,8 @@ class AwsInterface(CloudInterface):
         pass
 
     def get_status(self, api_key, server_id, server_location):
+        if server_id == "" or server_location is None:
+            return 'Offline'
         try:
             session = self.create_session(api_key, server_location)
             client = session.client('ec2', region_name=server_location)

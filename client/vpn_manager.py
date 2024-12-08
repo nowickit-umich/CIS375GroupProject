@@ -14,7 +14,6 @@ class VPN_Manager(Subject):
     def __init__(self):
         super().__init__([])
         self.is_ready = False
-        self.is_monitored = False
         self.is_connected = False
         self.profile_name = "CIS375VPN"
         self.username = "user"
@@ -92,3 +91,12 @@ class VPN_Manager(Subject):
         return: the status of the VPN disconnection(successful or unsuccessful)
         '''
         return self.vpn.disconnect(self.profile_name)
+    
+    def delete_profile(self):
+        '''
+        Description: delete the VPN profile from the system
+
+        return None
+        '''
+        self.vpn.delete_profile(self.profile_name)
+        return
