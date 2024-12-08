@@ -6,9 +6,6 @@ logger = logging.getLogger(__name__)
 class Cloud_Manager():
     '''
         Description: Manages the cloud including the interface of choice,  the server creation and deletion, and continuous status monitoring.
-
-        param list_name: a given list found in block_list
-        return: None
     '''
     def __init__(self):
         self.locations = ["None"]
