@@ -8,7 +8,7 @@ logging.getLogger('paramiko').setLevel(logging.ERROR)
 
 class VPN_Manager():
     '''
-        Description: Manages the connection to the VPN, allowing for connecting, disconnecting, and monitoring of the VPN.
+    Description: Manages the connection to the VPN, allowing for connecting, disconnecting, and monitoring of the VPN.
     '''
     def __init__(self):
         self.is_ready = False
