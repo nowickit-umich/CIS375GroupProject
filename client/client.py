@@ -559,31 +559,127 @@ class Filter_Screen(Screen):
             self.filter_manager.server_host = addr
         asyncio.create_task(self.sync_list())
         logger.debug("Filter Screen Initialized")
+
+
+
+
+
         
 class Stats_Screen(Screen):
+    '''
+    Description: Displays various statistics related to VPN, server status, and DNS data. 
+    Includes buttons to toggle between views such as blocked domains, top visited domains, 
+    top blocked domains, data blocked for domains, and DNS data.
+    '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.stats_manager = App.get_running_app().stats_manager
+        
+        # Create the main layout for the screen
+        main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
-        self.add_widget(Label(text='This is the Statistics Screen'))
+        # Create a layout to hold the statistics in the center
+        self.stats_layout = FloatLayout(size_hint=(.75, .75), height=dp(400), pos_hint={"center_x": 0.5, "center_y": 0.5})  # Set a fixed height for the scrollable area
 
-        # Display VPN status
-        self.vpn_label = Label(text=f"VPN Status: {self.stats_manager.get_vpn_status()}")
-        self.add_widget(self.vpn_label)
+        # Buttons for toggling each section
+        self.blocked_button = Button(text="View Blocked Domains", size_hint_y=None, height=dp(40))
+        self.top_visited_button = Button(text="View Top 10 Visited Domains", size_hint_y=None, height=dp(40))
+        self.top_blocked_button = Button(text="View Top 10 Blocked Domains", size_hint_y=None, height=dp(40))
+        self.data_blocked_button = Button(text="View Data Blocked for Domains", size_hint_y=None, height=dp(40))
+        self.dns_data_button = Button(text="View DNS Data", size_hint_y=None, height=dp(40))  # New button for DNS data
 
-        # Display Server status
-        self.server_label = Label(text=f"Server Status: {self.stats_manager.get_server_status()}")
-        self.add_widget(self.server_label)
+        # Create labels to hold the data
+        self.blocked_label = Label(size_hint=(None, None), height=dp(40), width=dp(300), markup=True)
+        self.top_visited_label = Label(size_hint=(None, None), height=dp(40), width=dp(300), markup=True)
+        self.top_blocked_label = Label(size_hint=(None, None), height=dp(40), width=dp(300), markup=True)
+        self.data_blocked_label = Label(size_hint=(None, None), height=dp(40), width=dp(300), markup=True)
+        self.dns_data_label = Label(size_hint=(None, None), height=dp(40), width=dp(300), markup=True)  # New label for DNS data
 
-        # Display Filter status
-        self.filter_label = Label(text=f"Filter Status: {self.stats_manager.get_filter_status()}")
-        self.add_widget(self.filter_label)
+        # Initially set all labels to be hidden
+        self.blocked_label.text = ""
+        self.top_visited_label.text = ""
+        self.top_blocked_label.text = ""
+        self.data_blocked_label.text = ""
+        self.dns_data_label.text = ""  # Set DNS label initially to be empty
 
-    def update_stats(self):
-        # Update the labels with current statistics
-        self.vpn_label.text = f"VPN Status: {self.stats_manager.get_vpn_status()}"
-        self.server_label.text = f"Server Status: {self.stats_manager.get_server_status()}"
-        self.filter_label.text = f"Filter Status: {self.stats_manager.get_filter_status()}"
+        # Add widgets to the layout
+        main_layout.add_widget(self.stats_layout)
+
+        # Add buttons at the bottom
+        buttons_layout = BoxLayout(size_hint_y=None, height=dp(60), orientation='horizontal')
+        buttons_layout.add_widget(self.blocked_button)
+        buttons_layout.add_widget(self.top_visited_button)
+        buttons_layout.add_widget(self.top_blocked_button)
+        buttons_layout.add_widget(self.data_blocked_button)
+        buttons_layout.add_widget(self.dns_data_button)  # Add the new DNS data button
+
+        main_layout.add_widget(buttons_layout)
+        self.add_widget(main_layout)
+
+        # Bind buttons to their functions
+        self.blocked_button.bind(on_press=self.show_blocked_domains)
+        self.top_visited_button.bind(on_press=self.show_top_visited)
+        self.top_blocked_button.bind(on_press=self.show_top_blocked)
+        self.data_blocked_button.bind(on_press=self.show_data_blocked)
+        self.dns_data_button.bind(on_press=self.show_dns_data)  # Bind the DNS data button
+
+        # Call the dns_data function to load the DNS data when the screen is initialized
+        self.stats_manager.dns_data()
+        ''
+    # Display the blocked domains
+    def show_blocked_domains(self, instance):
+        self.stats_layout.clear_widgets()
+        self.blocked_label.text = "[b][u]Blocked Domains for Current Session:[/u][/b]\n"
+        blocked_domains_list = self.stats_manager.get_blocked_domains()
+        for domain in blocked_domains_list:
+            self.blocked_label.text += f"\n{domain['domain']}"
+        self.blocked_label.center = self.stats_layout.center
+        self.stats_layout.add_widget(self.blocked_label)
+
+    # Display the top 10 visited domains
+    def show_top_visited(self, instance):
+        self.stats_layout.clear_widgets()
+        self.top_visited_label.text = "[b][u]Top 10 Visited Domains:[/u][/b]\n"
+        top_visited_list = self.stats_manager.get_top_visited()
+        for domain in top_visited_list:
+            self.top_visited_label.text += f"\n{domain['domain']} - Traffic: {domain['traffic']}"
+        self.top_visited_label.center = self.stats_layout.center
+        self.stats_layout.add_widget(self.top_visited_label)
+
+     # Display the top 10 blocked domains
+    def show_top_blocked(self, instance):
+        self.stats_layout.clear_widgets()
+        self.top_blocked_label.text = "[b][u]Top 10 Blocked Domains:[/u][/b]\n"
+        top_blocked_list = self.stats_manager.get_top_blocked_domains()
+        for domain in top_blocked_list:
+            self.top_blocked_label.text += f"\n{domain['domain']} - Times Blocked: {domain['denied']}"
+        self.top_blocked_label.center = self.stats_layout.center
+        self.stats_layout.add_widget(self.top_blocked_label)
+
+    # Display the data blocked for each domain
+    def show_data_blocked(self, instance):
+        self.stats_layout.clear_widgets()
+        self.data_blocked_label.text = "[b][u]Data Blocked for Each Domain:[/u][/b]\n"
+        total_data = self.stats_manager.get_total_data()
+        for domain in total_data:
+            self.data_blocked_label.text += f"\n {domain['domain']} - Total Data Blocked: {domain['total_data']} MB"
+        self.data_blocked_label.center = self.stats_layout.center
+        self.stats_layout.add_widget(self.data_blocked_label)
+
+    # Display DNS data with allowed and denied queries
+    def show_dns_data(self, instance):
+        self.stats_layout.clear_widgets()
+        self.dns_data_label.text = "[b][u]DNS Data - Allowed and Denied Queries:[/u][/b]\n"
+        dns_data = self.stats_manager.get_dns_data()
+        for domain, data in dns_data.items():
+            self.dns_data_label.text += f"\n{domain} - Allowed: {data['allowed']} | Denied: {data['denied']}"
+        self.dns_data_label.center = self.stats_layout.center
+        self.stats_layout.add_widget(self.dns_data_label) 
+
+
+
+
+
 
 class Main_Screen(Screen):
     '''

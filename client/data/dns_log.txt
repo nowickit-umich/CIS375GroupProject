@@ -1,0 +1,169 @@
+Dec  7 06:16:38 dnsmasq[2127]: started, version 2.90 cache disabled
+Dec  7 06:16:38 dnsmasq[2127]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC loop-detect inotify dumpfile
+Dec  7 06:16:38 dnsmasq[2127]: warning: ignoring resolv-file flag because no-resolv is set
+Dec  7 06:16:38 dnsmasq[2127]: using nameserver 1.1.1.1#53
+Dec  7 06:16:38 dnsmasq[2127]: read /etc/hosts - 8 names
+Dec  7 06:17:37 dnsmasq[2127]: 1 127.0.0.1/53142 query[A] changelogs.ubuntu.com from 127.0.0.1
+Dec  7 06:17:37 dnsmasq[2127]: 1 127.0.0.1/53142 forwarded changelogs.ubuntu.com to 1.1.1.1
+Dec  7 06:17:37 dnsmasq[2127]: 2 127.0.0.1/53142 query[AAAA] changelogs.ubuntu.com from 127.0.0.1
+Dec  7 06:17:37 dnsmasq[2127]: 2 127.0.0.1/53142 forwarded changelogs.ubuntu.com to 1.1.1.1
+Dec  7 06:17:37 dnsmasq[2127]: 1 127.0.0.1/53142 reply changelogs.ubuntu.com is 91.189.91.49
+Dec  7 06:17:37 dnsmasq[2127]: 1 127.0.0.1/53142 reply changelogs.ubuntu.com is 185.125.190.18
+Dec  7 06:17:37 dnsmasq[2127]: 1 127.0.0.1/53142 reply changelogs.ubuntu.com is 185.125.190.17
+Dec  7 06:17:37 dnsmasq[2127]: 1 127.0.0.1/53142 reply changelogs.ubuntu.com is 91.189.91.48
+Dec  7 06:17:37 dnsmasq[2127]: 2 127.0.0.1/53142 reply changelogs.ubuntu.com is 2001:67c:1562::23
+Dec  7 06:17:37 dnsmasq[2127]: 2 127.0.0.1/53142 reply changelogs.ubuntu.com is 2620:2d:4000:1::2a
+Dec  7 06:17:37 dnsmasq[2127]: 2 127.0.0.1/53142 reply changelogs.ubuntu.com is 2001:67c:1562::24
+Dec  7 06:17:37 dnsmasq[2127]: 2 127.0.0.1/53142 reply changelogs.ubuntu.com is 2620:2d:4000:1::2b
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 query[A] www.msftconnecttest.com from 10.99.99.1
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 forwarded www.msftconnecttest.com to 1.1.1.1
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 reply www.msftconnecttest.com is <CNAME>
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 reply ncsi-geo.trafficmanager.net is <CNAME>
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 reply www.msftncsi.com.edgesuite.net is <CNAME>
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 reply a1961.g2.akamai.net is 23.56.169.136
+Dec  7 06:17:41 dnsmasq[2127]: 3 10.99.99.1/55560 reply a1961.g2.akamai.net is 23.56.169.153
+Dec  7 06:17:42 dnsmasq[2127]: 4 10.99.99.1/57438 query[A] ec2.us-east-2.amazonaws.com from 10.99.99.1
+Dec  7 06:17:42 dnsmasq[2127]: 4 10.99.99.1/57438 forwarded ec2.us-east-2.amazonaws.com to 1.1.1.1
+Dec  7 06:17:42 dnsmasq[2127]: 4 10.99.99.1/57438 reply ec2.us-east-2.amazonaws.com is 52.95.20.2
+Dec  7 06:17:42 dnsmasq[2127]: 5 10.99.99.1/58867 query[A] mobile.events.data.microsoft.com from 10.99.99.1
+Dec  7 06:17:42 dnsmasq[2127]: 5 10.99.99.1/58867 forwarded mobile.events.data.microsoft.com to 1.1.1.1
+Dec  7 06:17:42 dnsmasq[2127]: 5 10.99.99.1/58867 reply mobile.events.data.microsoft.com is <CNAME>
+Dec  7 06:17:42 dnsmasq[2127]: 5 10.99.99.1/58867 reply mobile.events.data.trafficmanager.net is <CNAME>
+Dec  7 06:17:42 dnsmasq[2127]: 5 10.99.99.1/58867 reply onedscolprdwus19.westus.cloudapp.azure.com is 20.189.173.26
+Dec  7 06:17:42 dnsmasq[2127]: 6 10.99.99.1/54518 query[A] mtalk.google.com from 10.99.99.1
+Dec  7 06:17:42 dnsmasq[2127]: 6 10.99.99.1/54518 forwarded mtalk.google.com to 1.1.1.1
+Dec  7 06:17:42 dnsmasq[2127]: 6 10.99.99.1/54518 reply mtalk.google.com is <CNAME>
+Dec  7 06:17:42 dnsmasq[2127]: 6 10.99.99.1/54518 reply mobile-gtalk.l.google.com is 142.251.185.188
+Dec  7 06:17:42 dnsmasq[2127]: 7 10.99.99.1/56153 query[A] g.whatsapp.net from 10.99.99.1
+Dec  7 06:17:42 dnsmasq[2127]: 7 10.99.99.1/56153 forwarded g.whatsapp.net to 1.1.1.1
+Dec  7 06:17:42 dnsmasq[2127]: 7 10.99.99.1/56153 reply g.whatsapp.net is <CNAME>
+Dec  7 06:17:42 dnsmasq[2127]: 7 10.99.99.1/56153 reply chat.cdn.whatsapp.net is 157.240.229.61
+Dec  7 06:17:43 dnsmasq[2127]: 8 10.99.99.1/59284 query[A] geo.prod.do.dsp.mp.microsoft.com from 10.99.99.1
+Dec  7 06:17:43 dnsmasq[2127]: 8 10.99.99.1/59284 forwarded geo.prod.do.dsp.mp.microsoft.com to 1.1.1.1
+Dec  7 06:17:43 dnsmasq[2127]: 8 10.99.99.1/59284 reply geo.prod.do.dsp.mp.microsoft.com is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 8 10.99.99.1/59284 reply geo.prod.do.dsp.trafficmanager.net is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 8 10.99.99.1/59284 reply array507.prod.do.dsp.mp.microsoft.com is 52.167.200.126
+Dec  7 06:17:43 dnsmasq[2127]: 9 10.99.99.1/50919 query[A] client.wns.windows.com from 10.99.99.1
+Dec  7 06:17:43 dnsmasq[2127]: 9 10.99.99.1/50919 forwarded client.wns.windows.com to 1.1.1.1
+Dec  7 06:17:43 dnsmasq[2127]: 9 10.99.99.1/50919 reply client.wns.windows.com is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 9 10.99.99.1/50919 reply wns.notify.trafficmanager.net is 13.64.180.106
+Dec  7 06:17:43 dnsmasq[2127]: 10 10.99.99.1/56908 query[A] kv601.prod.do.dsp.mp.microsoft.com from 10.99.99.1
+Dec  7 06:17:43 dnsmasq[2127]: 10 10.99.99.1/56908 forwarded kv601.prod.do.dsp.mp.microsoft.com to 1.1.1.1
+Dec  7 06:17:43 dnsmasq[2127]: 10 10.99.99.1/56908 reply kv601.prod.do.dsp.mp.microsoft.com is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 10 10.99.99.1/56908 reply kv601.prod.do.dsp.mp.microsoft.com.edgekey.net is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 10 10.99.99.1/56908 reply e12358.d.akamaiedge.net is 23.54.41.245
+Dec  7 06:17:43 dnsmasq[2127]: 11 10.99.99.1/60511 query[A] cp601.prod.do.dsp.mp.microsoft.com from 10.99.99.1
+Dec  7 06:17:43 dnsmasq[2127]: 11 10.99.99.1/60511 forwarded cp601.prod.do.dsp.mp.microsoft.com to 1.1.1.1
+Dec  7 06:17:43 dnsmasq[2127]: 11 10.99.99.1/60511 reply cp601.prod.do.dsp.mp.microsoft.com is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 11 10.99.99.1/60511 reply cp601.prod.do.dsp.mp.microsoft.com.edgekey.net is <CNAME>
+Dec  7 06:17:43 dnsmasq[2127]: 11 10.99.99.1/60511 reply e12358.d.akamaiedge.net is 23.54.41.245
+Dec  7 06:17:43 dnsmasq[2127]: 12 10.99.99.1/55345 query[A] disc601.prod.do.dsp.mp.microsoft.com from 10.99.99.1
+Dec  7 06:17:43 dnsmasq[2127]: 12 10.99.99.1/55345 forwarded disc601.prod.do.dsp.mp.microsoft.com to 1.1.1.1
+Dec  7 06:17:44 dnsmasq[2127]: 12 10.99.99.1/55345 reply disc601.prod.do.dsp.mp.microsoft.com is <CNAME>
+Dec  7 06:17:44 dnsmasq[2127]: 12 10.99.99.1/55345 reply disc601.prod.do.dsp.mp.microsoft.com.edgekey.net is <CNAME>
+Dec  7 06:17:44 dnsmasq[2127]: 12 10.99.99.1/55345 reply e12358.d.akamaiedge.net is 23.54.41.245
+Dec  7 06:17:46 dnsmasq[2127]: 13 10.99.99.1/49270 query[A] ssl.gstatic.com from 10.99.99.1
+Dec  7 06:17:46 dnsmasq[2127]: 13 10.99.99.1/49270 forwarded ssl.gstatic.com to 1.1.1.1
+Dec  7 06:17:46 dnsmasq[2127]: 13 10.99.99.1/49270 reply ssl.gstatic.com is 142.251.177.94
+Dec  7 06:17:49 dnsmasq[2127]: exiting on receipt of SIGTERM
+Dec  7 06:17:49 dnsmasq[2740]: started, version 2.90 cache disabled
+Dec  7 06:17:49 dnsmasq[2740]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC loop-detect inotify dumpfile
+Dec  7 06:17:49 dnsmasq[2740]: warning: ignoring resolv-file flag because no-resolv is set
+Dec  7 06:17:49 dnsmasq[2740]: using nameserver 1.1.1.1#53
+Dec  7 06:17:49 dnsmasq[2740]: read /etc/hosts - 8 names
+Dec  7 06:17:52 dnsmasq[2740]: 1 10.99.99.1/54212 query[A] signaler-pa.clients6.google.com from 10.99.99.1
+Dec  7 06:17:52 dnsmasq[2740]: 1 10.99.99.1/54212 forwarded signaler-pa.clients6.google.com to 1.1.1.1
+Dec  7 06:17:52 dnsmasq[2740]: 1 10.99.99.1/54212 reply signaler-pa.clients6.google.com is 142.250.123.95
+Dec  7 06:17:58 dnsmasq[2740]: 2 10.99.99.1/53273 query[A] az764295.vo.msecnd.net from 10.99.99.1
+Dec  7 06:17:58 dnsmasq[2740]: 2 10.99.99.1/53273 forwarded az764295.vo.msecnd.net to 1.1.1.1
+Dec  7 06:17:58 dnsmasq[2740]: 2 10.99.99.1/53273 reply az764295.vo.msecnd.net is <CNAME>
+Dec  7 06:17:58 dnsmasq[2740]: 2 10.99.99.1/53273 reply cs22.wpc.v0cdn.net is 152.199.4.33
+Dec  7 06:17:59 dnsmasq[2740]: 3 10.99.99.1/59141 query[A] alive.github.com from 10.99.99.1
+Dec  7 06:17:59 dnsmasq[2740]: 3 10.99.99.1/59141 forwarded alive.github.com to 1.1.1.1
+Dec  7 06:17:59 dnsmasq[2740]: 3 10.99.99.1/59141 reply alive.github.com is <CNAME>
+Dec  7 06:17:59 dnsmasq[2740]: 3 10.99.99.1/59141 reply live.github.com is 140.82.113.25
+Dec  7 06:18:00 dnsmasq[2740]: exiting on receipt of SIGTERM
+Dec  7 06:18:00 dnsmasq[2823]: started, version 2.90 cache disabled
+Dec  7 06:18:00 dnsmasq[2823]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC loop-detect inotify dumpfile
+Dec  7 06:18:00 dnsmasq[2823]: warning: ignoring resolv-file flag because no-resolv is set
+Dec  7 06:18:00 dnsmasq[2823]: using nameserver 1.1.1.1#53
+Dec  7 06:18:00 dnsmasq[2823]: using only locally-known addresses for google.com
+Dec  7 06:18:00 dnsmasq[2823]: read /etc/hosts - 8 names
+Dec  7 06:18:02 dnsmasq[2823]: 1 10.99.99.1/49261 query[A] prod-dynamite-prod-09-us-signaler-pa.clients6.google.com from 10.99.99.1
+Dec  7 06:18:02 dnsmasq[2823]: 1 10.99.99.1/49261 config prod-dynamite-prod-09-us-signaler-pa.clients6.google.com is NXDOMAIN
+Dec  7 06:18:03 dnsmasq[2823]: 2 10.99.99.1/56765 query[A] zpns.zoom.us from 10.99.99.1
+Dec  7 06:18:03 dnsmasq[2823]: 2 10.99.99.1/56765 forwarded zpns.zoom.us to 1.1.1.1
+Dec  7 06:18:03 dnsmasq[2823]: 2 10.99.99.1/56765 reply zpns.zoom.us is <CNAME>
+Dec  7 06:18:03 dnsmasq[2823]: 2 10.99.99.1/56765 reply zpns-byoip-va.zoom.us is 170.114.1.184
+Dec  7 06:18:03 dnsmasq[2823]: 3 10.99.99.1/57609 query[A] ark.zoom.us from 10.99.99.1
+Dec  7 06:18:03 dnsmasq[2823]: 3 10.99.99.1/57609 forwarded ark.zoom.us to 1.1.1.1
+Dec  7 06:18:03 dnsmasq[2823]: 3 10.99.99.1/57609 reply ark.zoom.us is <CNAME>
+Dec  7 06:18:03 dnsmasq[2823]: 3 10.99.99.1/57609 reply ark-eks.zoom.us is <CNAME>
+Dec  7 06:18:03 dnsmasq[2823]: 3 10.99.99.1/57609 reply im-gateway-xmpp-ark-us01-4d392b5c815f6e50.elb.us-east-1.amazonaws.com is 170.114.7.144
+Dec  7 06:18:03 dnsmasq[2823]: 3 10.99.99.1/57609 reply im-gateway-xmpp-ark-us01-4d392b5c815f6e50.elb.us-east-1.amazonaws.com is 170.114.7.143
+Dec  7 06:18:03 dnsmasq[2823]: 4 10.99.99.1/62279 query[A] zoom.us from 10.99.99.1
+Dec  7 06:18:03 dnsmasq[2823]: 4 10.99.99.1/62279 forwarded zoom.us to 1.1.1.1
+Dec  7 06:18:03 dnsmasq[2823]: 4 10.99.99.1/62279 reply zoom.us is 170.114.52.2
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 query[A] xmpp002.zoom.us from 10.99.99.1
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 forwarded xmpp002.zoom.us to 1.1.1.1
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 query[AAAA] xmpp002.zoom.us from 10.99.99.1
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 forwarded xmpp002.zoom.us to 1.1.1.1
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 reply xmpp002.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 reply us01xmpp1.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 reply us01xmpp-nginx.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 reply us01xmpp-nginx-test-xsr.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 reply us01xmpp1-xsr.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 5 10.99.99.1/61511 reply us01xmpp-xsrsrv-container16.zoom.us is 170.114.4.229
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 reply xmpp002.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 reply us01xmpp1.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 reply us01xmpp-nginx.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 reply us01xmpp-nginx-test-xsr.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 reply us01xmpp1-xsr.zoom.us is <CNAME>
+Dec  7 06:18:04 dnsmasq[2823]: 6 10.99.99.1/54877 reply us01xmpp-xsrsrv-container29.zoom.us is 2407:30c0:100:722:f4bf:d7b9:456f:9129
+Dec  7 06:18:06 dnsmasq[2823]: 7 10.99.99.1/54878 query[PTR] 167.15.31.172.in-addr.arpa from 10.99.99.1
+Dec  7 06:18:06 dnsmasq[2823]: 7 10.99.99.1/54878 config 172.31.15.167 is NXDOMAIN
+Dec  7 06:18:06 dnsmasq[2823]: 8 10.99.99.1/54879 query[A] google.com from 10.99.99.1
+Dec  7 06:18:06 dnsmasq[2823]: 8 10.99.99.1/54879 config google.com is NXDOMAIN
+Dec  7 06:18:06 dnsmasq[2823]: 9 10.99.99.1/54880 query[AAAA] google.com from 10.99.99.1
+Dec  7 06:18:06 dnsmasq[2823]: 9 10.99.99.1/54880 config google.com is NXDOMAIN
+Dec  7 06:18:06 dnsmasq[2823]: 10 10.99.99.1/54881 query[A] google.com from 10.99.99.1
+Dec  7 06:18:06 dnsmasq[2823]: 10 10.99.99.1/54881 config google.com is NXDOMAIN
+Dec  7 06:18:06 dnsmasq[2823]: 11 10.99.99.1/54882 query[AAAA] google.com from 10.99.99.1
+Dec  7 06:18:06 dnsmasq[2823]: 11 10.99.99.1/54882 config google.com is NXDOMAIN
+Dec  7 06:18:06 dnsmasq[2823]: 12 10.99.99.1/64011 query[A] ec2.us-east-2.amazonaws.com from 10.99.99.1
+Dec  7 06:18:06 dnsmasq[2823]: 12 10.99.99.1/64011 forwarded ec2.us-east-2.amazonaws.com to 1.1.1.1
+Dec  7 06:18:06 dnsmasq[2823]: 12 10.99.99.1/64011 reply ec2.us-east-2.amazonaws.com is 52.95.20.2
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 query[A] us-east-2.console.aws.amazon.com from 10.99.99.1
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 forwarded us-east-2.console.aws.amazon.com to 1.1.1.1
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 reply us-east-2.console.aws.amazon.com is <CNAME>
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 reply us-east-2.console.cname-proxy.amazon.com is <CNAME>
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 reply gr.console-geo.us-east-2.amazonaws.com is <CNAME>
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 reply af2049b9c08c62706.awsglobalaccelerator.com is 13.248.199.77
+Dec  7 06:18:09 dnsmasq[2823]: 13 10.99.99.1/50411 reply af2049b9c08c62706.awsglobalaccelerator.com is 76.223.79.155
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 query[A] logs.us-east-2.amazonaws.com from 10.99.99.1
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 forwarded logs.us-east-2.amazonaws.com to 1.1.1.1
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.162
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.179
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.177
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.175
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.135
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.154
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.150
+Dec  7 06:18:09 dnsmasq[2823]: 14 10.99.99.1/60913 reply logs.us-east-2.amazonaws.com is 3.128.56.161
+Dec  7 06:18:09 dnsmasq[2823]: 15 10.99.99.1/60914 query[PTR] 167.15.31.172.in-addr.arpa from 10.99.99.1
+Dec  7 06:18:09 dnsmasq[2823]: 15 10.99.99.1/60914 config 172.31.15.167 is NXDOMAIN
+Dec  7 06:18:09 dnsmasq[2823]: 16 10.99.99.1/60915 query[A] google.com from 10.99.99.1
+Dec  7 06:18:09 dnsmasq[2823]: 16 10.99.99.1/60915 config google.com is NXDOMAIN
+Dec  7 06:18:10 dnsmasq[2823]: 17 10.99.99.1/60916 query[AAAA] google.com from 10.99.99.1
+Dec  7 06:18:10 dnsmasq[2823]: 17 10.99.99.1/60916 config google.com is NXDOMAIN
+Dec  7 06:18:10 dnsmasq[2823]: 18 10.99.99.1/60917 query[A] google.com from 10.99.99.1
+Dec  7 06:18:10 dnsmasq[2823]: 18 10.99.99.1/60917 config google.com is NXDOMAIN
+Dec  7 06:18:10 dnsmasq[2823]: 19 10.99.99.1/60918 query[AAAA] google.com from 10.99.99.1
+Dec  7 06:18:10 dnsmasq[2823]: 19 10.99.99.1/60918 config google.com is NXDOMAIN
+Dec  7 06:18:10 dnsmasq[2823]: 20 10.99.99.1/63830 query[A] prod-dynamite-prod-09-us-signaler-pa.clients6.google.com from 10.99.99.1
+Dec  7 06:18:10 dnsmasq[2823]: 20 10.99.99.1/63830 config prod-dynamite-prod-09-us-signaler-pa.clients6.google.com is NXDOMAIN
+Dec  7 06:18:16 dnsmasq[2823]: exiting on receipt of SIGTERM
+Dec  7 06:18:16 dnsmasq[2914]: started, version 2.90 cache disabled
+Dec  7 06:18:16 dnsmasq[2914]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC loop-detect inotify dumpfile
+Dec  7 06:18:16 dnsmasq[2914]: warning: ignoring resolv-file flag because no-resolv is set
+Dec  7 06:18:16 dnsmasq[2914]: using nameserver 1.1.1.1#53
