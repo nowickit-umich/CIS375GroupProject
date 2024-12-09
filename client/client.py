@@ -14,7 +14,6 @@ from kivy.metrics import dp
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 from kivy.uix.modalview import ModalView
-from kivy.core.window import Window
 
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
@@ -286,15 +285,15 @@ class Status_Widget(GridLayout, Observer):
         self.add_widget(Label(text="Server IP:", size_hint=(None,None), height=label_height,
                 width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
         self.add_widget(self.server_ip)
-        self.add_widget(Label(text="Latency:", size_hint=(None,None), height=label_height,
-                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
-        self.add_widget(self.server_latency)
+        #self.add_widget(Label(text="Latency:", size_hint=(None,None), height=label_height,
+        #        width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        #self.add_widget(self.server_latency)
         self.add_widget(Label(text="VPN Status:", size_hint=(None,None), height=label_height,
                 width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
         self.add_widget(self.vpn_status)
-        self.add_widget(Label(text="VPN Speed:", size_hint=(None,None), height=label_height,
-                width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
-        self.add_widget(self.vpn_speed)
+        #self.add_widget(Label(text="VPN Speed:", size_hint=(None,None), height=label_height,
+        #        width=label_width, halign="right", valign='middle', text_size=(label_width, None)))
+        #self.add_widget(self.vpn_speed)
 
     def update(self, cloud_manager, vpn_manager):
         '''
@@ -449,6 +448,7 @@ class VPN_Screen(Screen):
         #Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_status', "Starting"))
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
         Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', True))
+        Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_location', self.server_location_selector.text))
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
         except Exception as e:
@@ -459,8 +459,6 @@ class VPN_Screen(Screen):
         '''
         Description: Asynchronously attempts to delete the running server. 
         '''
-        Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
-        Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
         load = Loading_Overlay("Stopping Server...")
         Clock.schedule_once(load.open)
         try:
@@ -468,11 +466,9 @@ class VPN_Screen(Screen):
                 await asyncio.to_thread(self.vpn_manager.disconnect)
             await asyncio.to_thread(self.cloud_manager.delete_server)
             # wait for status to update
-            await asyncio.sleep(4)
+            await asyncio.sleep(5)
         except Exception as e:
             logger.error(f"Delete server error: {str(e)}")
-            Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', False))
-        Clock.schedule_once(lambda x: setattr(self, "server_button_lock", False))
         Clock.schedule_once(load.dismiss)
 
     def on_pre_enter(self, *args):
@@ -498,7 +494,7 @@ class Filter_Screen(Screen):
         layout = FloatLayout()
 
         # layout for filter checkbox
-        self.filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.5, "y":.5}, spacing = 10)
+        self.filter_layout = BoxLayout(orientation = "vertical", size_hint = (.8, .8), pos_hint = {"x":.05, "y":.5}, spacing = 10)
         # Title
         layout.add_widget(Label(text="[b]Configure Block Lists[/b]", markup=True, font_size=dp(18), halign='left', size_hint=(0.5, 0.1), pos_hint={"x":0.25, "y":0.85}))
         layout.add_widget(self.filter_layout)
@@ -517,8 +513,8 @@ class Filter_Screen(Screen):
         filter_layout.clear_widgets()
         for list in self.filter_manager.block_list:
             name = list['name'].removesuffix(".block")
-            row = BoxLayout(orientation = "horizontal", size_hint = (None,None), height = 40)
-            label = Label(text=name,  halign = "right", valign = "middle", color = (1,1,1))
+            row = BoxLayout(orientation = "horizontal", size_hint = (0.9,None), height = 40, spacing=20)
+            label = Label(text=name,  halign = "right", valign = "middle", color = (1,1,1), size_hint=(0.9, None), height=40)
             label.bind(size=label.setter("text_size"))
             
             checkbox = CheckBox(size_hint_x=None, width = 40, color = (1,1,1), active=list['enabled'])
@@ -716,8 +712,6 @@ class Client_App(App):
         return
 
     def build(self):
-        Window.title = "VPN Client"
-
         self.root_sm = ScreenManager(transition=NoTransition())
         login_screen = Login_Screen(name='login')
         main_screen = Main_Screen(name='main')

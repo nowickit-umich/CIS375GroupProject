@@ -99,8 +99,8 @@ class Cloud_Manager(Subject):
         self.is_ready = False
         self.cloud.delete_server(self.api_key, self.server_location, self.server_id)
         self.server_id = ""
-        self.server_ip = None
-        self.server_location = None
+        self.server_ip = ""
+        self.server_location = ""
         self.server_status = "Offline"
         self.is_ready = True
         return
