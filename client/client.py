@@ -486,11 +486,11 @@ class VPN_Screen(Screen):
 
 class Filter_Screen(Screen):
 
-        '''
-        Description: Allows user to activate/deactivate filters as they choose
-        User activates/deactivates checkboxes to change status of filters
-        Filters are .block files with multiple domains that can be blocked
-        '''
+    '''
+    Description: Allows user to activate/deactivate filters as they choose
+    User activates/deactivates checkboxes to change status of filters
+    Filters are .block files with multiple domains that can be blocked
+    '''
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
