@@ -13,23 +13,12 @@ class Stats_Manager:
     def __init__(self):
         # Initialize data structures for statistics
         self.dns_data_list={}
-        self.vpn_status = "Disconnected"
-        self.server_status = "Stopped"
-        self.filter_status = "No Filters"
         # Placeholder for domain statistics
         self.blocked_domains = []
         # Top 10 visited domains, ranked by traffic
         self.top_visited = []
         self.top_blocked = []    
         self.data_total = []
-
-
-    def update_filter_status(self, filters):
-        enabled_filters = [f for f in filters if filters[f]]
-        if enabled_filters:
-            self.filter_status = f"Enabled filters: {', '.join(enabled_filters)}"
-        else:
-            self.filter_status = "No Filters Enabled"
 
     def get_blocked_domains(self):
         # Iterate through the DNS data and return a list of blocked domains (denied > 0)
@@ -77,28 +66,28 @@ class Stats_Manager:
             for i in range(len(lines)-1):
                 curr_line = lines[i].split()
                 next_line = lines[i+1].split()
-                
-                if not curr_line[6].startswith('query'):
-                    continue 
-                domain_name = curr_line[7]
+                try:
+                    if "10.99.99.1" not in curr_line:
+                        continue
+                    if not curr_line[6].startswith('query'):
+                        continue 
+                    domain_name = curr_line[7]
 
-                if domain_name not in self.dns_data_list: 
-                    self.dns_data_list[domain_name] = {'allowed': 0,'denied': 0}
+                    if domain_name not in self.dns_data_list: 
+                        self.dns_data_list[domain_name] = {'allowed': 0,'denied': 0}
 
-                if next_line[6] == "forwarded": 
-                    self.dns_data_list[domain_name]['allowed'] += 1
-                
-                elif next_line[6] == "config": 
-                    self.dns_data_list[domain_name]['denied'] += 1
+                    if next_line[6] == "forwarded": 
+                        self.dns_data_list[domain_name]['allowed'] += 1
                     
+                    elif next_line[6] == "config": 
+                        self.dns_data_list[domain_name]['denied'] += 1
+                except IndexError:
+                    continue
+
         except FileNotFoundError:
             logger.error("Error: dns.log file not found.")
         except Exception as e:
             logger.error(f"Error reading dns.log: {e}")
-
-    def get_dns_data(self):
-        # Return the stored DNS data
-        return self.dns_data_list
     
     def update_log(self, server_address):
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
