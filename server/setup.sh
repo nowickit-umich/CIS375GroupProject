@@ -77,6 +77,8 @@ cp $SPATH/systemd/server_dns.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl start server_dns
 systemctl enable server_dns
+echo "" > /var/log/dns.log
+chmod 666 /var/log/dns.log
 
 #Start VPN
 systemctl restart strongswan

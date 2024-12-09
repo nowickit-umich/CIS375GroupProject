@@ -7,7 +7,7 @@ import os
 def check_connection():
     try:
         result = os.system('swanctl -l | grep -o "ESTABLISHED" | wc -l')
-        if result != "0":
+        if result.strip() != "0":
             return True
     except:
         return False

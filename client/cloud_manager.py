@@ -22,7 +22,6 @@ class Cloud_Manager(Subject):
         self.cloud = None
         return
 
-    # setup cloud interface and validate credentials
     def setup(self, credentials):
         '''
         Description: Given credentials(cloud interface name, and API keys), sets up the cloud interface of choice, logs the user in using the API keys, and gets the server locations.
@@ -56,7 +55,6 @@ class Cloud_Manager(Subject):
         self.is_ready = True
         return True
 
-    # Server status: initializing -> ok 
     def monitor_server(self):
         '''
         Description: periodically monitors the status of the server, updating server_status and notifying observers

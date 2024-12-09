@@ -14,6 +14,7 @@ from kivy.metrics import dp
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.spinner import Spinner
 from kivy.uix.modalview import ModalView
+from kivy.core.window import Window
 
 from cloud_manager import Cloud_Manager
 from vpn_manager import VPN_Manager
@@ -460,14 +461,19 @@ class VPN_Screen(Screen):
         '''
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", True))
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
+        load = Loading_Overlay("Stopping Server...")
+        Clock.schedule_once(load.open)
         try:
             if self.status.vpn_status.text == "Connected":
                 await asyncio.to_thread(self.vpn_manager.disconnect)
             await asyncio.to_thread(self.cloud_manager.delete_server)
+            # wait for status to update
+            await asyncio.sleep(4)
         except Exception as e:
             logger.error(f"Delete server error: {str(e)}")
             Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', False))
         Clock.schedule_once(lambda x: setattr(self, "server_button_lock", False))
+        Clock.schedule_once(load.dismiss)
 
     def on_pre_enter(self, *args):
         # Update location selector
@@ -559,11 +565,6 @@ class Filter_Screen(Screen):
             self.filter_manager.server_host = addr
         asyncio.create_task(self.sync_list())
         logger.debug("Filter Screen Initialized")
-
-
-
-
-
         
 class Stats_Screen(Screen):
     '''
@@ -623,9 +624,6 @@ class Stats_Screen(Screen):
         self.data_blocked_button.bind(on_press=self.show_data_blocked)
         self.dns_data_button.bind(on_press=self.show_dns_data)  # Bind the DNS data button
 
-        # Call the dns_data function to load the DNS data when the screen is initialized
-        self.stats_manager.dns_data()
-        ''
     # Display the blocked domains
     def show_blocked_domains(self, instance):
         self.stats_layout.clear_widgets()
@@ -667,7 +665,7 @@ class Stats_Screen(Screen):
         self.stats_layout.add_widget(self.data_blocked_label)
 
     # Display DNS data with allowed and denied queries
-    def show_dns_data(self, instance):
+    def show_dns_data(self, instance=None):
         self.stats_layout.clear_widgets()
         self.dns_data_label.text = "[b][u]DNS Data - Allowed and Denied Queries:[/u][/b]\n"
         dns_data = self.stats_manager.get_dns_data()
@@ -676,10 +674,21 @@ class Stats_Screen(Screen):
         self.dns_data_label.center = self.stats_layout.center
         self.stats_layout.add_widget(self.dns_data_label) 
 
+    async def sync_log(self, server_address):
+        try:
+            await asyncio.to_thread(self.stats_manager.update_log, server_address)
+        except Exception as e:
+            logger.error(f"Error Fetching DNS Log: {e}")
+        self.show_dns_data()
+        self.load.dismiss()
+        return
 
-
-
-
+    def on_pre_enter(self):
+        self.load = Loading_Overlay("Fetching DNS Logs...")
+        self.load.open()
+        addr = App.get_running_app().cloud_manager.server_private_ip
+        asyncio.create_task(self.sync_log(addr))
+        return
 
 class Main_Screen(Screen):
     '''
@@ -696,8 +705,9 @@ class Main_Screen(Screen):
         self.stats_screen = Stats_Screen(name='stat')
 
         # Add screens to screen manager
-        self.sm.add_widget(self.stats_screen)
+        self.sm.add_widget(Screen(name='int'))
         self.sm.add_widget(self.vpn_screen)
+        self.sm.add_widget(self.stats_screen)
         self.sm.add_widget(self.filter_screen)
 
         # Create a layout for the menu bar
@@ -736,6 +746,8 @@ class Client_App(App):
         return
 
     def build(self):
+        Window.title = "VPN Client"
+
         self.root_sm = ScreenManager(transition=NoTransition())
         login_screen = Login_Screen(name='login')
         main_screen = Main_Screen(name='main')

@@ -122,11 +122,12 @@ class Filter_Manager:
         key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
-        sftp = ssh.open_sftp()
         try:
+            ssh.connect(hostname=self.server_host, username="ubuntu", pkey=key)
+            sftp = ssh.open_sftp()
             lists = sftp.listdir_attr('/home/ubuntu/dnsmasq/')
+            sftp.close()
+            ssh.close()
         except Exception as e:
             logger.error(f"Unable to get server block lists {e}")
 
@@ -143,6 +144,5 @@ class Filter_Manager:
                 logger.debug(f"{list.filename}: Enabled")
                 
         self.block_list = current_block_list
-        sftp.close()
-        ssh.close()
+        
 
