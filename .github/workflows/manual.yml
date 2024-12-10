@@ -24,7 +24,7 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
-          python -m nuitka --standalone --onefile --windows-console-mode=disable --accept-yes --include-data-file=./client/vpn/windows/windows_vpn.dll=windows_vpn.dll --plugin-enable=kivy ./client/client.py
+          python -m nuitka --standalone --onefile --windows-console-mode=disable --assume-yes-for-downloads=yes --include-data-file=./client/vpn/windows/windows_vpn.dll=windows_vpn.dll --plugin-enable=kivy ./client/client.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
