@@ -19,6 +19,7 @@ class VPN_Manager(Subject):
         self.username = "user"
         self.password = ""
         self.pbk_path = "data/vpn.pbk"
+        self.is_cert_installed = False
         
         if platform.system() == "Windows":
             from vpn.windows_vpn import Windows_VPN
@@ -75,12 +76,16 @@ class VPN_Manager(Subject):
         '''
         self.get_vpn_keys(server_address)
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/cert.pem")
-        self.vpn.install_cert(path)
+        if not self.is_cert_installed:
+            self.vpn.install_cert(path)
+            self.is_cert_installed = True
         time.sleep(0.3)
         self.vpn.create_profile(self.profile_name, server_address, self.pbk_path)
         file = open("data/vpnkey.secret")
         password = file.readline().strip()
-        self.vpn.connect(self.profile_name, self.username, password, self.pbk_path)
+        ret = self.vpn.connect(self.profile_name, self.username, password, self.pbk_path)
+        if ret != 0:
+            raise Exception
         self.is_ready = True
         return
     
@@ -98,5 +103,6 @@ class VPN_Manager(Subject):
 
         return None
         '''
+        self.is_cert_installed = False
         self.vpn.delete_profile(self.profile_name)
         return
