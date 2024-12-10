@@ -30,4 +30,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: client.exe
-          path: ./client/client.exe
+          path: ./client.exe
