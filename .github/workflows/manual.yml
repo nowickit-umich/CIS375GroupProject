@@ -24,7 +24,7 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
-          python -m PyInstaller ./client.spec
+          python -m PyInstaller ./client/client.spec
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
