@@ -1,5 +1,8 @@
 import time
 import logging
+import os
+from platformdirs import user_data_dir
+app_name = "CIS375VPN"
 from observer import Observer, Subject
 
 logger = logging.getLogger(__name__)
@@ -82,7 +85,9 @@ class Cloud_Manager(Subject):
         '''
         key = self.cloud.create_ssh_key(self.server_key_name, self.api_key, self.server_location)
         # Save the private key to a file
-        with open("data/sshkey.pem", 'w') as file:
+        app_data_path = user_data_dir(app_name)
+        path = os.path.join(app_data_path, 'sshkey.pem')
+        with open(path, 'w') as file:
             file.write(key)
         instance = self.cloud.create_server(self.server_key_name, self.api_key, self.server_location)
         self.server_id = instance["InstanceId"]

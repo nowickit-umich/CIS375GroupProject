@@ -26,8 +26,15 @@ import asyncio
 import logging
 from threading import Thread
 
+from platformdirs import user_data_dir
+app_name = "CIS375VPN"
+dpath = user_data_dir(app_name)
+os.makedirs(dpath, exist_ok=True)
+
 logging.basicConfig(level=logging.DEBUG)
+file_handler = logging.FileHandler(os.path.join(dpath, "client.log"))
 logger = logging.getLogger(__name__)
+logger.addHandler(file_handler)
 
 class Loading_Overlay(ModalView):
     '''
@@ -225,7 +232,9 @@ class Login_Screen(Screen):
         return: None
         '''
         try:
-            file = open("data/credentials.secret", "w")
+            app_data_path = user_data_dir(app_name)
+            path = os.path.join(app_data_path, 'credentials.secret')
+            file = open(path, "w")
         except Exception as e:
             logger.error(f"Error saving credentials: {e}")
             return
@@ -242,7 +251,9 @@ class Login_Screen(Screen):
         return: None
         '''
         try:
-            file = open("data/credentials.secret", "r")
+            app_data_path = user_data_dir(app_name)
+            path = os.path.join(app_data_path, 'credentials.secret')
+            file = open(path , "r")
         except Exception as e:
             logger.error(f"Error reading credentials: {e}")
             return
@@ -250,7 +261,7 @@ class Login_Screen(Screen):
         access = file.readline().strip()
         secret = file.readline().strip()
         if (not cloud) or (not access) or (not secret) or (cloud not in self.cloud_types):
-            os.remove("data/credentials.secret")
+            os.remove(path)
             logger.debug("Removing invalid credential file")
             return
         self.input_access.text = access
@@ -309,8 +320,13 @@ class Status_Widget(GridLayout, Observer):
         if vpn_manager is not None:
             if vpn_manager.is_connected:
                 self.vpn_status.text = "Connected"
+                App.get_running_app().root_sm.get_screen('main').filter_button.disabled = False
+                App.get_running_app().root_sm.get_screen('main').stats_button.disabled = False
             else:
                 self.vpn_status.text = "Disconnected"
+                App.get_running_app().root_sm.get_screen('main').sm.current = 'vpn'
+                App.get_running_app().root_sm.get_screen('main').filter_button.disabled = True
+                App.get_running_app().root_sm.get_screen('main').stats_button.disabled = True
             self.is_updated = True
 
 class VPN_Screen(Screen):
@@ -336,6 +352,7 @@ class VPN_Screen(Screen):
         layout.add_widget(self.status)
         self.connect_button_lock = False
         self.connect_button = Button(text="Connect", size_hint=(1, None), height=50)
+        self.connect_button.background_color = (0,1,0)
         self.connect_button.on_press = lambda: asyncio.create_task(self.on_connect())
         self.connect_button.disabled = True
         layout.add_widget(self.connect_button)
@@ -354,6 +371,7 @@ class VPN_Screen(Screen):
         # Server Button
         self.server_button_lock = False
         self.server_button = Button(text="Start Server", size_hint=(1, None), height=50)
+        self.server_button.background_color = (0,1,0)
         self.server_button.on_press = lambda: asyncio.create_task(self.on_create_server())
         layout.add_widget(self.server_button)
         self.add_widget(layout)
@@ -407,17 +425,23 @@ class VPN_Screen(Screen):
         load = Loading_Overlay("Starting Server...")
         Clock.schedule_once(load.open)
         Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', True))
+        Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
         Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', True))
         Clock.schedule_once(lambda x: setattr(self.cloud_manager, 'server_location', self.server_location_selector.text))
         try:
             await asyncio.to_thread(self.cloud_manager.create_server)
             await asyncio.sleep(5)
-            Clock.schedule_once(lambda x: setattr(self.server_button, 'text', "Stop Server"))
-            Clock.schedule_once(lambda x: setattr(self.server_button, 'on_press', lambda: asyncio.create_task(self.on_delete_server())))
             while self.status.server_status.text == "Starting":
                 await asyncio.sleep(2)
             if self.status.server_status.text == "Running":
+                # server creation success
                 Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', False))
+                Clock.schedule_once(lambda x: setattr(self.server_button, 'text', "Stop Server"))
+                Clock.schedule_once(lambda x: setattr(self.server_button, 'on_press', lambda: asyncio.create_task(self.on_delete_server())))
+            if self.status.server_status.text == "Offline":
+                # server creation failed
+                Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
+                Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', False))
         except Exception as e:
             logger.error(f"Create server error: {str(e)}")
             Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', False))
@@ -439,7 +463,9 @@ class VPN_Screen(Screen):
             await asyncio.to_thread(self.cloud_manager.delete_server)
             # wait for status to update
             await asyncio.sleep(5)
+            Clock.schedule_once(lambda x: setattr(self.connect_button, 'disabled', True))
             Clock.schedule_once(lambda x: setattr(self.server_location_selector, 'disabled', False))
+            Clock.schedule_once(lambda x: setattr(self.server_button, 'disabled', False))
             Clock.schedule_once(lambda x: setattr(self.server_button, 'text', "Start Server"))
             Clock.schedule_once(lambda x: setattr(self.server_button, 'on_press', lambda: asyncio.create_task(self.on_create_server())))
         except Exception as e:
@@ -521,13 +547,13 @@ class Filter_Screen(Screen):
             await asyncio.to_thread(self.filter_manager.get_server_lists)
             # Add the checkbox widgets
             self.add_checkboxes(self.filter_layout)
-            self.load.dismiss()
+            Clock.schedule_once(self.load.dismiss)
         except:
             logger.error("Unable to get server filter lists")
 
     def on_pre_enter(self, *args):
         self.load = Loading_Overlay("Getting Active Filters...")
-        self.load.open()
+        Clock.schedule_once(self.load.open)
         # get server address
         addr = App.get_running_app().cloud_manager.server_private_ip
         # set address of filter manager
@@ -655,7 +681,9 @@ class Main_Screen(Screen):
         menu_bar = BoxLayout(size_hint_y=None, height=50)
         self.vpn_button = Button(text='VPN', on_press=lambda x:setattr(self.sm,'current','vpn'))
         self.filter_button = Button(text='Filter', on_press=lambda x:setattr(self.sm,'current','filter'))
+        self.filter_button.disabled = True
         self.stats_button = Button(text='Statistics', on_press=lambda x:setattr(self.sm,'current','stat'))
+        self.stats_button.disabled = True
         menu_bar.add_widget(self.vpn_button)
         menu_bar.add_widget(self.filter_button)
         menu_bar.add_widget(self.stats_button)

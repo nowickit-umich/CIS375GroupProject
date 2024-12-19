@@ -42,7 +42,9 @@ class Windows_VPN(VPN_Interface):
         try:
             cmd = f'\'-Command Import-Certificate -FilePath \"{path}\" -CertStoreLocation Cert:\LocalMachine\Root\''
             admin_cmd = f'Powershell -Command Start-Process -Verb RunAs -WindowStyle Hidden -FilePath \"PowerShell.exe\" -ArgumentList {cmd}'
-            subprocess.run(admin_cmd, creationflags=subprocess.CREATE_NO_WINDOW, shell=True)
+            res = subprocess.run(admin_cmd, creationflags=subprocess.CREATE_NO_WINDOW, shell=True, capture_output=True, text=True)
+            if res.returncode != 0:
+                raise
             logger.info("Installed certificate")
 
         except Exception as e:

@@ -1,5 +1,7 @@
 import paramiko
 import os
+from platformdirs import user_data_dir
+app_name = "CIS375VPN"
 import logging
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,9 @@ class Stats_Manager:
     def dns_data(self):
         # Open and read the DNS log file
         try:
-            with open('data/dns.log', 'r') as file:
+            app_data_path = user_data_dir(app_name)
+            path = os.path.join(app_data_path, 'dns.log')
+            with open(path, 'r') as file:
                 lines=file.readlines() 
 
             for i in range(len(lines)-1):
@@ -96,7 +100,9 @@ class Stats_Manager:
         try:
             ssh.connect(hostname=server_address, username="ubuntu", pkey=key)
             sftp = ssh.open_sftp()
-            sftp.get("/var/log/dns.log", "data/dns.log")
+            app_data_path = user_data_dir(app_name)
+            path = os.path.join(app_data_path, 'dns.log')
+            sftp.get("/var/log/dns.log", path)
         except Exception as e:
             logger.error(f"Unable to get DNS logs: {e}")
         sftp.close()

@@ -1,11 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
-# BUILD CMD: python -m PyInstaller ./client.spec
+# BUILD CMD: python -m PyInstaller --log-level=ERROR ./client.spec
 
 a = Analysis(
     ['client.py'],
     pathex=[],
     binaries=[('vpn/windows/windows_vpn.dll','vpn/windows/')],
-    datas=[],
+    datas=[('data/images/load.zip', 'data/images/load.zip'), ('data/block/', 'data/block/')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -1,6 +1,8 @@
 import platform
 import paramiko
 import os
+from platformdirs import user_data_dir
+app_name = "CIS375VPN"
 import time
 import logging
 from observer import Subject
@@ -18,7 +20,9 @@ class VPN_Manager(Subject):
         self.profile_name = "CIS375VPN"
         self.username = "user"
         self.password = ""
-        self.pbk_path = "data/vpn.pbk"
+        app_data_path = user_data_dir(app_name)
+        path = os.path.join(app_data_path, 'vpn.pbk')
+        self.pbk_path = path
         self.is_cert_installed = False
         
         if platform.system() == "Windows":
@@ -35,13 +39,18 @@ class VPN_Manager(Subject):
         param server_ip: IP address of server to connect to
         return: None
         '''
-        key = paramiko.RSAKey.from_private_key_file("data/sshkey.pem")
+        app_data_path = user_data_dir(app_name)
+        path = os.path.join(app_data_path, 'sshkey.pem')
+        key = paramiko.RSAKey.from_private_key_file(path)
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=server_ip, username="ubuntu", pkey=key)
         sftp = ssh.open_sftp()
-        sftp.get("/etc/swanctl/x509/cert.pem", "data/cert.pem")
-        sftp.get("/home/ubuntu/vpnkey.secret", "data/vpnkey.secret")
+        app_data_path = user_data_dir(app_name)
+        path = os.path.join(app_data_path, 'cert.pem')
+        sftp.get("/etc/swanctl/x509/cert.pem", path)
+        path = os.path.join(app_data_path, 'vpnkey.secret')
+        sftp.get("/home/ubuntu/vpnkey.secret", path)
         sftp.close()
         ssh.close()
         logger.info("Successfully retrieved server keys")
@@ -75,13 +84,16 @@ class VPN_Manager(Subject):
         return: None
         '''
         self.get_vpn_keys(server_address)
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/cert.pem")
+        app_data_path = user_data_dir(app_name)
+        path = os.path.join(app_data_path, 'cert.pem')
         if not self.is_cert_installed:
             self.vpn.install_cert(path)
             self.is_cert_installed = True
         time.sleep(0.3)
         self.vpn.create_profile(self.profile_name, server_address, self.pbk_path)
-        file = open("data/vpnkey.secret")
+        app_data_path = user_data_dir(app_name)
+        path = os.path.join(app_data_path, 'vpnkey.secret')
+        file = open(path)
         password = file.readline().strip()
         ret = self.vpn.connect(self.profile_name, self.username, password, self.pbk_path)
         if ret != 0:
